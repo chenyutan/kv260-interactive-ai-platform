@@ -1,0 +1,11 @@
+ROI_PASS case=0 stress=1 cycles=810085 rows=512 read_bytes=1966080
+ROI_PASS case=1 stress=1 cycles=596678 rows=512 read_bytes=1310720
+ROI_PASS case=2 stress=1 cycles=438179 rows=432 read_bytes=829440
+ROI_PASS case=3 stress=1 cycles=596106 rows=512 read_bytes=1310720
+ROI_PASS case=4 stress=1 cycles=167773 rows=14 read_bytes=896
+ROI_PASS case=5 stress=1 cycles=167744 rows=1 read_bytes=64
+ROI_PASS case=6 stress=1 cycles=167304 rows=1 read_bytes=4
+ROI_PASS case=7 stress=1 cycles=172618 rows=2 read_bytes=16384
+ROI_PASS case=0 stress=0 cycles=624649 rows=512 read_bytes=1966080
+ROI_PASS case=4 stress=1 cycles=167512 rows=14 read_bytes=896
+PASS: ROI pipeline checks=655360 memory_errors=2 mid_fill_reset=1 invalid_config=1

@@ -1,0 +1,15 @@
+{
+  "fixture": 4,
+  "width": 32,
+  "height": 24,
+  "stride": 76,
+  "roi_xywh": [
+    3,
+    5,
+    17,
+    13
+  ],
+  "source_sha256": "f610b1f22da21a089f2f793c880fd9a112811e517d57526a4974f548b1201b4c",
+  "rgb_sha256": "f797a001b5d320ef63727d0090a570349d3d36eff5fec81da48211f24d1e9110",
+  "int8_sha256": "0c2c5fca3fb1a7982ffc319c5e3e67f0172e90020fb4eb40fcd81f1bff89ccf7"
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "bodyink.live_templates.v1",
+  "model_sha256": "b63f213fdc51ec7efb78a353a6d1e58627470e7cefa0e1cb0b7202d34793f1a9",
+  "inference_pipeline": {
+    "color_order": "RGB",
+    "input_image_shape": [
+      256,
+      256,
+      3
+    ],
+    "preprocess_version": "opencv-rgb-bilinear-v1/rgb-bgrmean-reversed-v2/bicubic-v1",
+    "protocol_version": "bodyink-pose-v3",
+    "selector_version": "hourglass-fullheight-quality-fallback-v1"
+  },
+  "engine_config": {
+    "enabled_actions": null,
+    "min_score": 0.3,
+    "min_shoulder_pixels": 18.0,
+    "min_distal_score": 0.2,
+    "ready_seconds": 0.45,
+    "hold_seconds": 0.45,
+    "return_seconds": 0.45,
+    "stable_radius": 0.025,
+    "terminal_radius": 0.06,
+    "onset_distance": 0.065,
+    "start_distance": 0.23,
+    "endpoint_distance": 0.28,
+    "endpoint_hysteresis": 0.04,
+    "progress_hysteresis": 0.05,
+    "min_progress": 0.72,
+    "min_duration": 0.25,
+    "max_duration": 12.0,
+    "max_tracking_gap": 0.2,
+    "max_sample_gap": 0.16,
+    "max_distance": 0.22,
+    "min_margin": 0.018,
+    "origin_weight": 0.35,
+    "minimum_excursion": 0.16,
+    "max_reverse_fraction": 0.32
+  },
+  "readiness_errors": [
+    "missing_or_invalid_templates:A05",
+    "missing_or_invalid_speed_calibration:A05"
+  ]
+}

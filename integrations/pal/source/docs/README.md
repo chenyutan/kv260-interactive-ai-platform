@@ -17,7 +17,7 @@ The development team has built a web-based demo version of SDLPAL on github page
 LICENSE
 =======
 
-SDLPAL is originally created by [Wei Mingzhi](https://github.com/CecilHarvey) from 2009. Now it is owned by the SDLPAL development team. Please see [AUTHORS](AUTHORS) for full author list.
+SDLPAL is originally created by [Wei Mingzhi](https://github.com/CecilHarvey) from 2009. Now it is owned by the SDLPAL development team. Please see [AUTHORS](authors) for full author list.
 ```
 Copyright (c) 2009-2011, Wei Mingzhi <whistler_wmz@users.sf.net>.
 Copyright (c) 2011-2018, SDLPAL development team.
@@ -120,7 +120,7 @@ To build the game, please go to the root of the source code tree and type:
 $ cd unix
 $ make
 ```
-You also need to have SDL 2.0 development files installed in the system. The compiled executable should be generated with the filename *`sdlpal`* at the current directory. By default, SDLPAL uses the FLTK library to provide setting GUI at launch. If you do not want to use the library, please define he macro `PAL_NO_LAUNCH_UI` in the `Makefile`. SDLPAL should also be able to compile and run under other Unix-like systems, however it's not tested.
+You also need to have SDL 2.0 development files installed in the system. The compiled executable should be generated with the filename *`sdlpal`* at the current directory. By default, SDLPAL uses the FLTK library to provide setting GUI at launch. If you do not want to use the library, please define he macro `PAL_NO_LAUNCH_UI` in the `makefile`. SDLPAL should also be able to compile and run under other Unix-like systems, however it's not tested.
 
 
 macOS (OS X)
@@ -179,7 +179,7 @@ Choosing the battle system
 
 By default, SDLPAL builds a *"classic"* turn-based battle system which is designed to be 100% the same as the original game.
 
-SDLPAL also provides a revised battle system (***deprecated*** and will be removed in future) which is more exciting yet somewhat harder than the original game. If you prefer this battle system, please define the macro `ENABLE_REVISIED_BATTLE` in *`Makefile`* or in *`common.h`* and recompile the project.
+SDLPAL also provides a revised battle system (***deprecated*** and will be removed in future) which is more exciting yet somewhat harder than the original game. If you prefer this battle system, please define the macro `ENABLE_REVISIED_BATTLE` in *`makefile`* or in *`common.h`* and recompile the project.
 
 
 Running the game

@@ -1,7 +1,8 @@
 {
   "author": "Quaternius",
   "pack": "Ultimate Modular Men (license file calls it Ultimate Modular Males)",
-  "asset": "Casual_Hoodie.gltf",
+  "asset": "casual_hoodie.gltf",
+  "upstream_filename": "Casual_Hoodie.gltf",
   "license": "CC0-1.0",
   "official_pack_page": "https://quaternius.com/packs/ultimatemodularcharacters.html",
   "official_author_announcement": "https://www.patreon.com/quaternius/posts/ultimate-modular-62873637",

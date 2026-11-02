@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "bitwise_equal": true,
+  "camera_used": false,
+  "dpu_used": false,
+  "stored_heatmaps": 8,
+  "equal_cases": 275,
+  "versions": {
+    "baseline": {
+      "mean_ms": 6.539705056241019,
+      "median_ms": 5.729303500629612,
+      "p95_ms": 12.92694410058174,
+      "process_cpu_ms": 5.157444412499999,
+      "samples": 160
+    },
+    "tight1": {
+      "mean_ms": 5.404934331181721,
+      "median_ms": 4.6249989991338225,
+      "p95_ms": 9.099436099586454,
+      "process_cpu_ms": 4.4340951875000325,
+      "samples": 160
+    },
+    "tight2": {
+      "mean_ms": 5.217733756251164,
+      "median_ms": 4.828502999771445,
+      "p95_ms": 9.494473099130117,
+      "process_cpu_ms": 4.820234512499988,
+      "samples": 160
+    },
+    "neon1": {
+      "mean_ms": 5.135454487526658,
+      "median_ms": 4.375534499558853,
+      "p95_ms": 8.741091049341776,
+      "process_cpu_ms": 4.109657456250014,
+      "samples": 160
+    },
+    "neon2": {
+      "mean_ms": 4.912535749929248,
+      "median_ms": 4.20658650000405,
+      "p95_ms": 10.158411049451388,
+      "process_cpu_ms": 4.304385737499992,
+      "samples": 160
+    }
+  },
+  "hashes": {
+    "tight1.so": "e999570231a8d1727d1065ff886eade3bc81240a4c70ee5c9476848f4059b66c",
+    "neon1.so": "3a88102227dbb4c6d657e78ff98f219fe7eb5659fa8a139704824d7b2016e12f",
+    "tight2.so": "d71fc34e86ee2fc306fa8fab008ccfa251904b0537b6e3a4f335754b4ce263ef",
+    "neon2.so": "5a768b0c2849e42e80e09214aced469b81ef9737c7cbbd6a0195e102b6da643a",
+    "baseline.so": "0f25e340de9e10f6f3238d5183b475602c21f7fabf6c33505a8da218fc5b63f1",
+    "neon.c": "6e3c8fffb51ddced7d0e8a9fe2bc1e3f810577de77c049f46d8ebeb1eccba931",
+    "tight.c": "1059fdc9b5af8d11e22c48c1f1b531de3a7775f409295ad4bd5db994c74efe27"
+  },
+  "elapsed_sample_environment": "Live services left running; interleaved order"
+}

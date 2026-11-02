@@ -30,9 +30,9 @@ report = session.report()
 
 ## 视频、来源与音频
 
-10段八段锦真人教学来自[深圳市文化广电旅游体育局专栏](https://wtl.sz.gov.cn/ztzl_78228/tszl/wlzgj/bdj/)，按[非商业转载条款](https://wtl.sz.gov.cn/fzlm/bqbh/index.html)保留出处。已逐段去除18–31秒无动作片头，合计269秒，保留正式讲解、示范、细节和纠正。具体边界和原始/处理后哈希见 `assets/video/manifest.json`，出处见 `ATTRIBUTION.md`。
+10段八段锦真人教学来自[深圳市文化广电旅游体育局专栏](https://wtl.sz.gov.cn/ztzl_78228/tszl/wlzgj/bdj/)，按[非商业转载条款](https://wtl.sz.gov.cn/fzlm/bqbh/index.html)保留出处。已逐段去除18–31秒无动作片头，合计269秒，保留正式讲解、示范、细节和纠正。具体边界和原始/处理后哈希见 `assets/video/manifest.json`，出处见 `assets/video/attribution.md`。
 
-太极真人示范来自[北京理工大学公开视频下载页](https://opt.bit.edu.cn/zlxz/b58242.htm)，按24式边界分段；每一式对应一段实际真人演练，细节由应用文字和骨架示意补充。它不是24段独立分解讲解。完整顺序、来源与时间边界见 `assets/taichi-video/manifest.json` 和 `ATTRIBUTION.md`。
+太极真人示范来自[北京理工大学公开视频下载页](https://opt.bit.edu.cn/zlxz/b58242.htm)，按24式边界分段；每一式对应一段实际真人演练，细节由应用文字和骨架示意补充。它不是24段独立分解讲解。完整顺序、来源与时间边界见 `assets/taichi-video/manifest.json` 和 `assets/taichi-video/attribution.md`。
 
 两套媒体全画面等比例转码、必要留边，VP8/Vorbis、640×360/25FPS，保留原声及画面署名。限定本项目本地非商业学习，不随公开GitHub源码上传。原始媒体保存在本任务E盘工作区，应用只含播放用文件。
 

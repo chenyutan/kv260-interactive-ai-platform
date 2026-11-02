@@ -2,7 +2,23 @@
 
 观众站在摄像头前，以身体动作绘制水墨、控制游戏，或跟练八段锦和太极。KV260 负责本地视觉推理与画面显示，DeepSeek 助手提供玩法说明、创作建议及成绩复盘。
 
-[参赛技术报告（PDF，24 页）](docs/technical-report.pdf) 包含整机实物、FPGA 图像前处理电路、Hourglass 姿态推理流程及板端测试结果。第 15 页展示八段锦现场跟练，第 20 页列出路由后的整板资源用量。
+[参赛技术报告（PDF，26 页）](report/technical-report.pdf) 第 15 页展示八段锦现场跟练，第 20 页给出整板布线后的资源用量，第 25–26 页记录写缓存优化、智能体纠错与复现步骤。
+
+## 赛题 3.3 提交目录对照
+
+Git 仓库和参赛 RAR 的根目录使用相同布局。视觉后端、相机服务和游戏宿主保留独立目录，便于按板端工作目录部署。下表给出它们与赛题推荐的 `src/` 及其他交付项的对应关系。
+
+| 指南目录 | 本项目入口 | 可核对的内容 |
+|---|---|---|
+| `src/` 设计源码 | [PL 逻辑](fpga/rtl)、[ARM 视觉与动作](bodyink-live)、[USB 摄像头](camera)、[体验应用](ink-suite) | 七级定点流水、ROI 缓存与 DMA、板端模型调用、游戏与交互。其余源码见下表。 |
+| `sim/` 仿真 | [仿真结果及复跑步骤](sim/README.md) · [测试台](fpga/sim) | 算术、ROI、背压和 DMA 的自检记录 |
+| `build/` 构建与实现 | [综合、路由与时序报告](build/README.md) · [平台构建脚本](fpga) | 写缓存优化前后资源及整板实际用量 |
+| `board/` 上板 | [实测与板端运行入口](board/README.md) · [固件打包](fpga/deployment) · [服务配置](systemd) | CPU 和 PL 输入张量、DPU 热图、ARM 解码 |
+| `data/` 数据与黄金参考 | [测试数据与复核程序](data/README.md) | 36 组历史热图与公开合成样例 |
+| `skill/` 技能 | [适用范围、使用步骤与验证](skill/README.md) · [标准 Agent Skill](skill/xilinx-bridge-cli/SKILL.md) | 命令行、配置文件、真实的跨器件仿真与综合记录 |
+| `report/` 设计报告 | [参赛报告](report/technical-report.pdf) · [真实协作节选](report/ai-collaboration.md) · [从零复现](report/reproduction.md) | 工程原理、模型纠错过程及复现环境 |
+
+在安装了 Python 和 NumPy 的主机上，从根目录运行 `python data/verify_evidence.py` 即可核对归档数据。完整复现分为主机仿真、FPGA 实现和 KV260 上板三步，所需工具与逐步操作见[复现说明](report/reproduction.md)。
 
 ## 源码目录
 
@@ -15,7 +31,7 @@
 | fruit-slice、ink-fight | 主机调用的独立游戏引擎和配套资源 |
 | integrations | PAL 移植和 TheXTech 原生控制补丁 |
 | models、tools | 模型来源与照片模型恢复、训练代码、动作标注工具 |
-| [skills/xilinx-bridge-cli](skills/xilinx-bridge-cli/SKILL.md) | 标准 Agent Skill，自带 CLI。可选择 Basys 3、ZedBoard、KV260 或填写自定义板卡配置 |
+| [skill/xilinx-bridge-cli](skill/xilinx-bridge-cli/SKILL.md) | 标准 Agent Skill，自带 CLI。可选择 Basys 3、ZedBoard、KV260 或填写自定义板卡配置 |
 
 ## 从源码构建
 
@@ -31,12 +47,16 @@
 
 4. 在目标的 bodyink-live 目录，每条普通 C 库使用 cc -O3 -shared -fPIC SOURCE.c -o TARGET.so -lm。对应关系为 dtw.c → libbodyink_dtw.so，start_geometry.c → libbodyink_geometry.so，preprocess.c → libbodyink_preprocess.so，hourglass_postprocess.c → libbodyink_hourglass.so，pl_bridge/pl_mmio.c → pl_bridge/libpl_mmio.so，pl_bridge/roi_copy.c → pl_bridge/libroi_copy.so。使用 c++ -O3 -shared -fPIC postprocess_fast.cpp -o libbodyink_postprocess.so -lm 构建兼容解码库。摄像程序从 camera/build.sh 构建。systemd 服务和 drop-in 给出目标工作目录、DPU/PL 参数及依赖顺序。
 
-5. ink-suite/sword/compile.sh、runner/native/build_native.py、kart/native 的构建脚本和 pal/pause_bridge.c 分别构建游戏原生库。按 THIRD_PARTY.md 准备教学视频、商业游戏自有数据、品牌资源和系统依赖。仅在受信板卡本地的 ~/.config/ink-suite/deepseek.json 设置自己的 api_key，权限为 600。无密钥时可用本地玩法说明。目标板已有正确的服务和固件后运行 python3 /home/ubuntu/ink-suite/launch.py --fullscreen。标签工具从 tools/ink-label/Install.cmd 安装。开发用提取服务 board_pose_server.py 默认只监听回环，可使用 SSH 端口转发。
+5. ink-suite/sword/compile.sh、runner/native/build_native.py、kart/native 的构建脚本和 pal/pause_bridge.c 分别构建游戏原生库。按 third_party.md 准备教学视频、商业游戏自有数据、品牌资源和系统依赖。仅在受信板卡本地的 ~/.config/ink-suite/deepseek.json 设置自己的 api_key，权限为 600。无密钥时可用本地玩法说明。目标板已有正确的服务和固件后运行 python3 /home/ubuntu/ink-suite/launch.py --fullscreen。标签工具从 tools/ink-label/install.cmd 安装。开发用提取服务 board_pose_server.py 默认只监听回环，可使用 SSH 端口转发。
 
-6. 可在 ink-suite 目录运行 python -B -m unittest test_ai_assistant health.test_courses runner.test_body_controls fruit.test_input_gate，使用本机测试替身。桥接 CLI 的安装、配置、权限和示例见 skills/xilinx-bridge-cli/SKILL.md。此仓库为源码交付，系统镜像、商业教学/游戏素材和受许可约束的 AMD 软件由使用者按相应条款取得。
+6. 可在 ink-suite 目录运行 python -B -m unittest test_ai_assistant health.test_courses runner.test_body_controls fruit.test_input_gate，使用本机测试替身。桥接 CLI 的安装、配置、权限和示例见 skill/xilinx-bridge-cli/SKILL.md。此仓库为源码交付，系统镜像、商业教学/游戏素材和受许可约束的 AMD 软件由使用者按相应条款取得。
 
 ## 代码基线
 
-前端使用 10 月 29 日健康与太极最终版，叠加同日菜单修改、10 月 28 日绘画操作说明及 10 月 26 日跑酷修复。水墨后端采用 10 月 28 日实际安装的八项变更。PL 平台为 USB 摄像、B4096 DPU 和团队预处理 IP 的组合。原始个人摄像帧以确定性仿真向量代替。每个发布文件的摘要记录在 SHA256SUMS。
+前端使用 10 月 29 日健康与太极最终版，叠加同日菜单修改、10 月 28 日绘画操作说明及 10 月 26 日跑酷修复。水墨后端采用 10 月 28 日实际安装的八项变更。PL 平台为 USB 摄像、B4096 DPU 和团队预处理 IP 的组合。原始个人摄像帧以确定性仿真向量代替。每个发布文件的摘要记录在 sha256sums.txt。
 
 针对演示所用 0bda:5858 USB 相机，先在目标板的一份源码副本中运行 python3 camera/configure_capture.py /dev/video0（选择实际的 index 0 节点），再构建 camera 并安装对应服务配置。固件部署时在 fpga/deployment 下执行 dtc -@ -I dts -O dtb -o bodyink-usb-pl.dtbo bodyink-usb-pl.dts，设置 BODYINK_BUILD_LOG 指向本次 Vivado 完整实现日志，并通过 PATH 提供 bootgen 后运行 package_firmware.py。脚本检查时序和位流生成日志。
+
+## 外部组件与授权
+
+本仓库公开团队源码，团队自有部分目前未另授再分发许可。随包的第三方组件保留各自许可，模型、教学视频和游戏数据的取得方式见[外部资源与许可](third_party.md)。

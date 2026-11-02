@@ -1,5 +1,5 @@
 {
-  "NotoSerifSC-VF.ttf": {
+  "notoserifsc-vf.ttf": {
     "bytes": 25129160,
     "sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
     "license": "SIL OFL 1.1",
@@ -7,7 +7,7 @@
     "modified": false,
     "subset": false
   },
-  "NotoSansSC-Regular.otf": {
+  "notosanssc-regular.otf": {
     "bytes": 8482020,
     "sha256": "a2b93e6c2db05d6bbbf6f27d413ec73269735b7b679019c8a5aa9670ff0ffbf2",
     "license": "SIL OFL 1.1",

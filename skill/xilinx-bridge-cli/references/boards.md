@@ -41,4 +41,4 @@ python BRIDGE --board-profile BOARD sim threshold_demo/threshold_demo.xpr --tb t
 
 做 Vitis AI 编译时，将该设计的 DPU 架构 JSON 路径写进配置的 `dpu_arch`。通过 `call vitis_ai_flow` 运行 `compile` 或 `pipeline`，编译器使用所选文件。模型部署前需把 XMODEL 的目标指纹与实机 DPU 核对。KV260 配置中的 `adapter: "kv260"` 开启 `call kv260_board_flow` 的专用相机、固件与 DPU 流程。填写 `ssh` 后，Bridge 会先从目标设备树确认 KV260 载板型号。
 
-Basys 3、ZedBoard 和 KV260 配置已分别完成 Vivado 建工程、256 个输入的 xsim 检查和器件综合。JTAG 实物下载、Flash 以及板上 DPU 推理仍以每块实物的运行结果为准。
+Basys 3、ZedBoard 和 KV260 配置均已在 Vivado 2026.1 中建立像素阈值工程，三组 xsim 各通过 256 个输入。器件综合另用带寄存器的加法器完成，三种目标均映射出 9 个触发器。Basys 3 与 ZedBoard 的实物下载、Flash 和板上运行未在该轮验证中执行。

@@ -1,0 +1,38 @@
+/dts-v1/;
+/ {
+ description = "KV260 revB BodyInk1 matched kernel and modules";
+ #address-cells = <1>;
+ images {
+  kernel-1 {
+   description = "Ubuntu 1027.31 Camera3 UVC payload fix; 5.15.0-1027-bodyink1";
+   data = /incbin/("image.gz");
+   type = "kernel"; arch = "arm64"; os = "linux"; compression = "gzip";
+   load = <0x00200000>; entry = <0x00200000>;
+   hash-1 { algo = "sha256"; };
+  };
+  ramdisk-1 {
+   description = "Board-generated initramfs with matching BodyInk1 modules";
+   data = /incbin/("initrd.img");
+   type = "ramdisk"; arch = "arm64"; os = "linux"; compression = "none";
+   hash-1 { algo = "sha256"; };
+  };
+  fdt-1 {
+   description = "Original KV260 revB DTB";
+   data = /incbin/("kv260-revb.dtb");
+   type = "flat_dt"; arch = "arm64"; compression = "none";
+   load = <0x44000000>;
+   hash-1 { algo = "sha256"; };
+  };
+ };
+ configurations {
+  default = "conf-smk-k26-revA-sck-kv-g-revB";
+  conf-smk-k26-revA-sck-kv-g-revB {
+   description = "Original bootscript-compatible KV260 revB configuration";
+   kernel = "kernel-1"; ramdisk = "ramdisk-1"; fdt = "fdt-1";
+  };
+  conf-bodyink-kv260-revB {
+   description = "Alias for volatile UART validation";
+   kernel = "kernel-1"; ramdisk = "ramdisk-1"; fdt = "fdt-1";
+  };
+ };
+};

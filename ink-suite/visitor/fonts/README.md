@@ -1,9 +1,9 @@
 # 战绩长图字体
 
-两份完整字体均保留原二进制，未做子集或格式转换。它们内部的 `name` 表声明 SIL Open Font License 1.1；本目录的 `.OFL.txt` 保存原版权说明及 Noto CJK 官方许可证文本，`manifest.json` 固定大小、SHA256 与许可证来源。
+两份完整字体均保留原二进制，未做子集或格式转换。它们内部的 `name` 表声明 SIL Open Font License 1.1；本目录的 `.ofl.txt` 保存原版权说明及 Noto CJK 官方许可证文本，`manifest.json` 固定大小、SHA256 与许可证来源。
 
-- `NotoSerifSC-VF.ttf`：25,129,160 字节，30,928 个 Unicode cmap 条目。用于标题、昵称、大号成绩；渲染时采用原有可变字重轴的 700 字重。
-- `NotoSansSC-Regular.otf`：8,482,020 字节，30,892 个 Unicode cmap 条目。用于说明、时间、统计与规则。
+- `notoserifsc-vf.ttf`：25,129,160 字节，30,928 个 Unicode cmap 条目。用于标题、昵称、大号成绩；渲染时采用原有可变字重轴的 700 字重。
+- `notosanssc-regular.otf`：8,482,020 字节，30,892 个 Unicode cmap 条目。用于说明、时间、统计与规则。
 
 运行时优先读取 Linux 已安装的 Noto / Source Han CJK 字体，随后读取这里打包的完整 Noto 字体，Windows 字体路径只用于开发机备用。没有可显示中文的字体时明确失败，不用缺字方框替代。测试对“墨境御剑山河鼓动彩水果武对决访客战绩麒麟龘”等字符实际生成字形遮罩，并确认不等于缺字框。
 

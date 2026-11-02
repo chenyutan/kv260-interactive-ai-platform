@@ -1,0 +1,33 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
+| Date         : Mon Sep 14 09:59:00 2026
+| Command      : report_utilization -hierarchical -file utilization.rpt
+| Design       : bodyink_preprocess_dma
+| Device       : xck26-sfvc784-2LV-c
+| Speed File   : -2LV
+| Design State : Synthesized
+------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++----------------------------+-------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+|          Instance          |          Module         | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | URAM | DSP Blocks |
++----------------------------+-------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+| bodyink_preprocess_dma     |                   (top) |       4570 |       4552 |       0 |   18 | 9320 |      8 |      3 |    0 |         36 |
+|   (bodyink_preprocess_dma) |                   (top) |         91 |         91 |       0 |    0 |    5 |      0 |      0 |    0 |          0 |
+|   front                    |    bodyink_roi_frontend |       1258 |       1240 |       0 |   18 |  624 |      8 |      3 |    0 |         36 |
+|     (front)                |    bodyink_roi_frontend |        558 |        558 |       0 |    0 |  289 |      8 |      0 |    0 |          3 |
+|     core                   | bodyink_preprocess_core |        700 |        682 |       0 |   18 |  335 |      0 |      3 |    0 |         33 |
+|   reader                   |      bodyink_axi_reader |        191 |        191 |       0 |    0 |  100 |      0 |      0 |    0 |          0 |
+|   writer                   |      bodyink_axi_writer |       3030 |       3030 |       0 |    0 | 8591 |      0 |      0 |    0 |          0 |
++----------------------------+-------------------------+------------+------------+---------+------+------+--------+--------+------+------------+
+
+

@@ -1,0 +1,34 @@
+{
+  "duration_us": 60.0,
+  "row_commands": [
+    {
+      "address": "0x100003248",
+      "words": 541
+    },
+    {
+      "address": "0x100004148",
+      "words": 541
+    },
+    {
+      "address": "0x100006e48",
+      "words": 541
+    },
+    {
+      "address": "0x100007d48",
+      "words": 541
+    },
+    {
+      "address": "0x10000b948",
+      "words": 541
+    },
+    {
+      "address": "0x10000c848",
+      "words": 541
+    }
+  ],
+  "response_words": 3246,
+  "ordered_outputs": 655,
+  "stable_output_stall_edges": 409,
+  "stable_request_stall_edges": 6,
+  "remaining_response_words_at_window_end": 0
+}

@@ -7,7 +7,7 @@ The default native character combines Quaternius **Casual_Hoodie** (CC0) with lo
 From the suite root:
 
 ```sh
-python -B runner/character_source/tools/build_imported_courier.py --source runner/character_source/quaternius-hoodie/Casual_Hoodie.gltf --output runner/native/runner_imported_data.h --report runner/character_source/build-report.json
+python -B runner/character_source/tools/build_imported_courier.py --source runner/character_source/quaternius-hoodie/casual_hoodie.gltf --output runner/native/runner_imported_data.h --report runner/character_source/build-report.json
 ```
 
 The data header contains 6,206 body triangles and 3,273 unique weighted vertices. Runtime lantern/ribbon accessories and shoulder straps add 344 triangles, for 6,550 total. The 15-node retarget retains at most four influences per vertex. Relaxed closed fingers are baked offline using the source finger joints and collapsed to the forearm; no runtime hand joints were added. Original animation tracks are preserved in the source for editing but are not sampled at runtime.

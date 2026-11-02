@@ -1,0 +1,20 @@
+# xsim v2022.2 (64-bit)
+# SW Build 3671981 on Fri Oct 14 05:00:03 MDT 2022
+# Start of session at: Mon Sep 14 10:00:09 2026
+DMA_PASS case=0 mode=0 max_burst=256 cycles=579831 read_bytes=1107968 write_bytes=196608 AR=1536 AW=193
+DMA_PASS case=1 mode=0 max_burst=256 cycles=455281 read_bytes=739328 write_bytes=196608 AR=1024 AW=193
+DMA_PASS case=2 mode=0 max_burst=256 cycles=330850 read_bytes=374976 write_bytes=196608 AR=513 AW=193
+DMA_PASS case=3 mode=0 max_burst=256 cycles=406904 read_bytes=593920 write_bytes=196608 AR=1055 AW=193
+DMA_PASS case=0 mode=1 max_burst=256 cycles=341 read_bytes=1024 write_bytes=0 AR=1 AW=0
+DMA_PASS case=0 mode=2 max_burst=256 cycles=1468 read_bytes=4328 write_bytes=4 AR=6 AW=1
+DMA_PASS case=0 mode=3 max_burst=256 cycles=361 read_bytes=1024 write_bytes=0 AR=1 AW=0
+DMA_PASS case=0 mode=4 max_burst=256 cycles=1539 read_bytes=4328 write_bytes=4 AR=6 AW=1
+DMA_PASS case=0 mode=7 max_burst=256 cycles=1498 read_bytes=4328 write_bytes=4 AR=6 AW=1
+DMA_PASS case=0 mode=6 max_burst=256 cycles=10 read_bytes=4 write_bytes=0 AR=1 AW=0
+DMA_PASS case=0 mode=8 max_burst=256 cycles=377 read_bytes=1028 write_bytes=0 AR=1 AW=0
+DMA_PASS case=4 mode=0 max_burst=256 cycles=203138 read_bytes=560 write_bytes=196608 AR=14 AW=193
+DMA_PASS case=4 mode=0 max_burst=256 cycles=203680 read_bytes=560 write_bytes=196608 AR=14 AW=193
+DMA_PASS case=6 mode=0 max_burst=256 cycles=203655 read_bytes=4 write_bytes=196608 AR=1 AW=193
+DMA_PASS case=0 mode=9 max_burst=256 cycles=5 read_bytes=0 write_bytes=0 AR=0 AW=0
+DMA_PASS case=0 mode=10 max_burst=256 cycles=4 read_bytes=0 write_bytes=0 AR=0 AW=0
+PASS: AXI DMA checks=344067 errors=4 cancel_AR_AW_W=3 coordinated_reset=1 restart_after_error=1 unaligned_rejected=2

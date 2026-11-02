@@ -41,7 +41,7 @@
 #include <stdbool.h>
 
 #include <SDL.h>
-#include "myFLOAT.h"
+#include "myfloat.h"
 
 #define __WIDETEXT(quote) L##quote
 #define WIDETEXT(quote) __WIDETEXT(quote)

@@ -392,7 +392,10 @@ class LiveApp:
     def preprocess_worker(self):
         use_pl=getattr(self.args,'preprocess_backend','cpu')=='pl'
         if use_pl:
-            sys.path.insert(0,str(ROOT/'buffer-bridge'))
+            bridge = ROOT / 'pl_bridge'
+            if not (bridge / 'pl_preprocess.py').is_file():
+                bridge = ROOT / 'buffer-bridge'
+            sys.path.insert(0, str(bridge))
             from pl_adapter import PLAdapter
             pre=PLAdapter()
         else:pre=YuyvPreprocessor()

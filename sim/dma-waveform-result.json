@@ -1,0 +1,24 @@
+{
+  "window_us": 80.0,
+  "AR": 23,
+  "R_beats": 4190,
+  "AW": 3,
+  "W_beats_byte_checked": 513,
+  "B": 3,
+  "stable_stalled_edges": 202,
+  "write_bursts": [
+    {
+      "address": "0x200000ffc",
+      "beats": 1
+    },
+    {
+      "address": "0x200001000",
+      "beats": 256
+    },
+    {
+      "address": "0x200001400",
+      "beats": 256
+    }
+  ],
+  "boundary_and_last_checked": true
+}

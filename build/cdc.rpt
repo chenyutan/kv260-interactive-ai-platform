@@ -1,0 +1,24 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
+| Date              : Mon Sep 14 12:58:18 2026
+| Command           : report_cdc -file cdc.rpt
+| Design            : kv260_ispMipiRx_vcu_DP_wrapper
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.30 05-15-2022
+| Temperature Grade : C
+-----------------------------------------------------------------------------------------
+
+CDC Report
+
+Severity  Source Clock                                     Destination Clock                                CDC Type                 Exceptions               Endpoints  Safe  Unsafe  Unknown  No ASYNC_REG  
+--------  -----------------------------------------------  -----------------------------------------------  -----------------------  -----------------------  ---------  ----  ------  -------  ------------  
+Warning   clk_out1_kv260_ispMipiRx_vcu_DP_clk_wiz_audio_0  clk_100M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      No Common Primary Clock  Max Delay Datapath Only        226   226       0        0             0  
+Warning   clk_100M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_out1_kv260_ispMipiRx_vcu_DP_clk_wiz_audio_0  No Common Primary Clock  Max Delay Datapath Only        340   340       0        0             0  
+Info      clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_100M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      Safely Timed             None                           871   871       0        0             0  
+Info      clk_100M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      Safely Timed             None                           526   526       0        0             0  
+Info      clk_600M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      Safely Timed             None                          4992  4992       0        0             0  
+Info      clk_out1_kv260_ispMipiRx_vcu_DP_clk_wiz_audio_0  clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      No Common Primary Clock  Max Delay Datapath Only          4     4       0        0             0  
+Info      clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_600M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      Safely Timed             None                          3074  3074       0        0             0  
+Info      clk_300M_kv260_ispMipiRx_vcu_DP_clk_wiz_0_0      clk_out1_kv260_ispMipiRx_vcu_DP_clk_wiz_audio_0  No Common Primary Clock  Max Delay Datapath Only          4     4       0        0             0  
+

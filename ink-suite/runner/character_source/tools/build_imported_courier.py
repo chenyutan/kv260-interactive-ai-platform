@@ -5,9 +5,9 @@ import sys,json,hashlib,argparse
 from pathlib import Path
 import numpy as np
 from gltf_mesh import GLB,worlds,mesh
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--source',type=Path,default=ROOT/'quaternius-hoodie/Casual_Hoodie.gltf')
+parser.add_argument('--source',type=Path,default=ROOT/'quaternius-hoodie/casual_hoodie.gltf')
 parser.add_argument('--output',type=Path,required=True)
 parser.add_argument('--report',type=Path,required=True)
 args=parser.parse_args();SOURCE=args.source;DEST=args.output

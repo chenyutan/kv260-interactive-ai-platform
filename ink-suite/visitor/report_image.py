@@ -109,8 +109,8 @@ def _font_candidates(title=False):
             yield root / name
     bundled=Path(__file__).with_name('fonts')
     if title:
-        yield bundled/'NotoSerifSC-VF.ttf'
-    yield bundled/'NotoSansSC-Regular.otf'
+        yield bundled/'notoserifsc-vf.ttf'
+    yield bundled/'notosanssc-regular.otf'
     fonts = Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts'
     windows = ('Source Han Serif SC Heavy (TrueType).ttf', 'NotoSerifSC-VF.ttf',
                'simkai.ttf', 'simsun.ttc') if title else (
@@ -151,7 +151,7 @@ def font_path(title=False):
 @lru_cache(maxsize=32)
 def _font(size, title=False):
     font=_cjk_font(font_path(title), size)
-    if title and font_path(title).name=='NotoSerifSC-VF.ttf':
+    if title and font_path(title).name.lower()=='notoserifsc-vf.ttf':
         font.set_variation_by_axes([700])
     return font
 

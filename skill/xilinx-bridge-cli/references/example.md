@@ -14,4 +14,4 @@ python BRIDGE call vivado_create_project --file create.json
 4. 检查输出中的 `status=success`、`summary.simulation.verdict=pass` 和 `summary.markers.PASS` 中的 `256 gray levels checked`。工程位于工作目录的 `threshold_demo/threshold_demo.xpr`。可用返回的 `summary.xsim_log` 找到测试台原始记录。
 5. 修改测试台或 RTL 后，用 `python BRIDGE sim threshold_demo/threshold_demo.xpr --tb tb_pixel_threshold --runtime all` 在同一项目复测。再次执行建工程命令会保护已存在的同名工程。
 
-同一份 RTL 与测试台已按 Basys 3、ZedBoard、KV260 三种器件配置在 Vivado 2026.1 中各自建工程。每组 xsim 都通过了 256 个灰度输入的自检，并分别完成了面向所选器件的综合。跨板操作命令见[板卡配置](boards.md)。样例未约束物理引脚。
+同一份阈值电路与测试台已按 Basys 3、ZedBoard、KV260 三种器件配置在 Vivado 2026.1 中分别建工程，每组 xsim 均通过 256 个灰度输入。独立的器件综合实验使用带寄存器的加法器，在三种目标上各映射出 9 个触发器。阈值样例未约束物理引脚。跨板操作命令见[板卡配置](boards.md)。

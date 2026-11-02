@@ -1,0 +1,302 @@
+[
+  {
+    "platform": "old",
+    "backend": "cpu",
+    "height": 720,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 44.71593295092674,
+    "frames": 536,
+    "produced": 721,
+    "dropped": 184,
+    "latency_ms": {
+      "mean": 37.73092601710481,
+      "p95": 45.32235549982033,
+      "max": 46.86037800001941
+    },
+    "queue_age_ms": {
+      "mean": 8.544871836503493,
+      "p95": 15.998139999510386,
+      "max": 16.859408000527765
+    },
+    "preprocess_ms": {
+      "mean": 7.176828283273978,
+      "p95": 7.373395500053448,
+      "max": 8.855518000018492
+    },
+    "dpu_ms": {
+      "mean": 15.652481404921268,
+      "p95": 15.948589249546785,
+      "max": 16.420294999988982
+    },
+    "postprocess_ms": {
+      "mean": 4.704690568448275,
+      "p95": 5.742900500763426,
+      "max": 6.625076000091212
+    },
+    "validation_ms": {
+      "mean": 0.25654166540832674,
+      "p95": 0.4476374997466337,
+      "max": 0.6171959994389908
+    },
+    "predict_wall_ms": {
+      "mean": 22.009225897327337,
+      "p95": 23.581501000535354,
+      "max": 24.63224699931743
+    }
+  },
+  {
+    "platform": "old",
+    "backend": "cpu",
+    "height": 1080,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 44.22073766648525,
+    "frames": 531,
+    "produced": 722,
+    "dropped": 190,
+    "latency_ms": {
+      "mean": 38.12712025527601,
+      "p95": 45.54101499979879,
+      "max": 47.79020799924183
+    },
+    "queue_age_ms": {
+      "mean": 8.368771168883429,
+      "p95": 15.906519000054686,
+      "max": 17.024989999299578
+    },
+    "preprocess_ms": {
+      "mean": 7.509495451048959,
+      "p95": 9.208502000547014,
+      "max": 10.676446999241307
+    },
+    "dpu_ms": {
+      "mean": 15.68919928790549,
+      "p95": 15.941980000206968,
+      "max": 16.128961000504205
+    },
+    "postprocess_ms": {
+      "mean": 4.851391585442154,
+      "p95": 5.783307999990939,
+      "max": 6.322312999145652
+    },
+    "validation_ms": {
+      "mean": 0.26204186370476745,
+      "p95": 0.4241839997121133,
+      "max": 0.6685159996777656
+    },
+    "predict_wall_ms": {
+      "mean": 22.24885363534362,
+      "p95": 23.69625699975586,
+      "max": 24.41305399952398
+    }
+  },
+  {
+    "platform": "new",
+    "backend": "cpu",
+    "height": 720,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 43.980304966440556,
+    "frames": 660,
+    "produced": 901,
+    "dropped": 240,
+    "latency_ms": {
+      "mean": 38.4937067861868,
+      "p95": 45.367018000342796,
+      "max": 47.361384000396356
+    },
+    "queue_age_ms": {
+      "mean": 8.93470936149802,
+      "p95": 15.858486499291757,
+      "max": 16.681766999681713
+    },
+    "preprocess_ms": {
+      "mean": 7.1972284000031115,
+      "p95": 7.362323949655547,
+      "max": 9.416975000931416
+    },
+    "dpu_ms": {
+      "mean": 15.746643170761953,
+      "p95": 16.027030451004975,
+      "max": 16.467905001263716
+    },
+    "postprocess_ms": {
+      "mean": 4.915675335387977,
+      "p95": 5.782900449503359,
+      "max": 6.659777000095346
+    },
+    "validation_ms": {
+      "mean": 0.27227065538262163,
+      "p95": 0.466526499531028,
+      "max": 0.722696999218897
+    },
+    "predict_wall_ms": {
+      "mean": 22.36176902468567,
+      "p95": 23.695925499396253,
+      "max": 25.00052000141295
+    }
+  },
+  {
+    "platform": "new",
+    "backend": "cpu",
+    "height": 1080,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 44.49200497564554,
+    "frames": 668,
+    "produced": 902,
+    "dropped": 233,
+    "latency_ms": {
+      "mean": 38.01833791183355,
+      "p95": 45.4663569999866,
+      "max": 58.750227000928135
+    },
+    "queue_age_ms": {
+      "mean": 8.421334983283229,
+      "p95": 15.710636650419472,
+      "max": 22.853858999951626
+    },
+    "preprocess_ms": {
+      "mean": 7.470432237082978,
+      "p95": 9.068404999379709,
+      "max": 12.61015700038115
+    },
+    "dpu_ms": {
+      "mean": 15.70967270058742,
+      "p95": 15.988447999188793,
+      "max": 17.073019998861128
+    },
+    "postprocess_ms": {
+      "mean": 4.76023609271551,
+      "p95": 5.712809999022284,
+      "max": 18.930759999420843
+    },
+    "validation_ms": {
+      "mean": 0.25547160644333766,
+      "p95": 0.44541164870679495,
+      "max": 1.2361419994704193
+    },
+    "predict_wall_ms": {
+      "mean": 22.12657069146734,
+      "p95": 23.63958085024933,
+      "max": 38.03425099977176
+    }
+  },
+  {
+    "platform": "new",
+    "backend": "pl",
+    "height": 720,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 47.21221924745631,
+    "frames": 707,
+    "produced": 900,
+    "dropped": 192,
+    "latency_ms": {
+      "mean": 34.62148120947722,
+      "p95": 41.76833919918863,
+      "max": 44.3115130001388
+    },
+    "queue_age_ms": {
+      "mean": 7.704251654246386,
+      "p95": 14.579971199054851,
+      "max": 17.93309899949236
+    },
+    "preprocess_ms": {
+      "mean": 6.089578261109149,
+      "p95": 6.522185000721947,
+      "max": 7.51020499956212
+    },
+    "dpu_ms": {
+      "mean": 15.852627786209041,
+      "p95": 16.23786019954423,
+      "max": 16.65544699972088
+    },
+    "postprocess_ms": {
+      "mean": 4.790722611174856,
+      "p95": 5.879282999012503,
+      "max": 6.4370439995400375
+    },
+    "validation_ms": {
+      "mean": 0.2529891664310094,
+      "p95": 0.39948000085132646,
+      "max": 0.7611880009790184
+    },
+    "predict_wall_ms": {
+      "mean": 20.827651294121683,
+      "p95": 22.18711800087476,
+      "max": 22.891189000802115
+    }
+  },
+  {
+    "platform": "new",
+    "backend": "pl",
+    "height": 1080,
+    "source": "saved frames paced at up to 60 FPS",
+    "live_camera_read": false,
+    "includes_native_pose_decode": true,
+    "includes_usb_or_display": false,
+    "roi_count": 1,
+    "all_heatmaps_equal": true,
+    "pose_fps": 47.1924506225565,
+    "frames": 706,
+    "produced": 899,
+    "dropped": 192,
+    "latency_ms": {
+      "mean": 37.32079629170501,
+      "p95": 44.55597325022609,
+      "max": 46.830348001094535
+    },
+    "queue_age_ms": {
+      "mean": 8.886584482754982,
+      "p95": 16.659905999404145,
+      "max": 17.421934000594774
+    },
+    "preprocess_ms": {
+      "mean": 7.599556856348499,
+      "p95": 8.080102749772777,
+      "max": 9.070369998880778
+    },
+    "dpu_ms": {
+      "mean": 15.951385762972437,
+      "p95": 16.4104915002099,
+      "max": 16.86583799892105
+    },
+    "postprocess_ms": {
+      "mean": 4.701151344769297,
+      "p95": 5.625703749501554,
+      "max": 6.554875000801985
+    },
+    "validation_ms": {
+      "mean": 0.25641577011309236,
+      "p95": 0.4561714995361399,
+      "max": 0.6259260007936973
+    },
+    "predict_wall_ms": {
+      "mean": 20.83465495260153,
+      "p95": 21.973167499254487,
+      "max": 23.150312001234852
+    }
+  }
+]

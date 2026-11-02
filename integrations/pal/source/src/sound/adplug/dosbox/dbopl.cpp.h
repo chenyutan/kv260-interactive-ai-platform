@@ -150,7 +150,7 @@ static Bit16u SinTable[ 512 ];
 
 static Bit16s WaveTable[ 8 * 512 ] = {
 #if ( DBOPL_WAVE == WAVE_TABLEMUL )
-#include "WaveTable.h"
+#include "wavetable.h"
 #endif
 };
 //Distance into WaveTable the wave starts
@@ -174,7 +174,7 @@ static const Bit16u WaveStartTable[8] = {
 
 #if ( DBOPL_WAVE == WAVE_TABLEMUL )
 static Bit16u MulTable[ 384 ] = {
-#include "MulTable.h"
+#include "multable.h"
 };
 #endif
 

@@ -1,6 +1,10 @@
 #!/bin/sh
 # Run on the board after the permanent patched kernel has passed its boot test.
 set -eu
+case "${1:-}" in
+    ""|--install-only) ;;
+    *) echo "Usage: $0 [--install-only]" >&2; exit 2 ;;
+esac
 test "$(id -u)" = 0 || { echo 'Run as root' >&2; exit 1; }
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 test -f /sys/module/uvcvideo/parameters/bodyink_ss_bandwidth || { echo 'Boot the supported BodyInk kernel first' >&2; exit 1; }
@@ -18,5 +22,8 @@ if test ! -e /etc/default/bodyink-camera; then
 fi
 systemctl daemon-reload
 systemctl enable bodyink-uvc-bandwidth.service bodyink-camera.service
+if test "${1:-}" = --install-only; then
+    exit 0
+fi
 systemctl start bodyink-camera.service
 systemctl --no-pager status bodyink-camera.service
