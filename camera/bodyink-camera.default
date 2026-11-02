@@ -1,0 +1,3 @@
+# All measurements use original V4L2 timestamps, not an artificial output FPS.
+# Exposure units: 100 = 10 ms; gain is left unchanged.
+BODYINK_CAMERA_ARGS="--device /dev/v4l/by-id/usb-Generic_USB_Camera3___BODYINK_CAMERA_SERIAL__-video-index0 --exposure 100 --stats-interval 10 --timeout 3 --buffers 8 --snapshot-fps 10"

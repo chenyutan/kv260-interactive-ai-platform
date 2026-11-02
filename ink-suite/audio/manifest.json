@@ -1,0 +1,476 @@
+{
+  "schema": 1,
+  "sample_rate": 48000,
+  "channels": 2,
+  "format": "PCM S16LE",
+  "seed": 260929,
+  "provenance": "Original algorithmic composition and physical-inspired synthesis; no third-party music, recordings, samples, or copied melodies.",
+  "license": "Project-original generated source and waveforms; may be used and modified with InkSuite.",
+  "tracks": {
+    "bgm_ink": {
+      "file": "assets/bgm_ink.wav",
+      "loop": true,
+      "gain": 0.72,
+      "title": "溪山听雨",
+      "bpm": 80,
+      "bars": 24,
+      "mode": "D minor pentatonic",
+      "instruments": [
+        "synthesized guqin",
+        "breathy bamboo flute",
+        "low plucked strings",
+        "bell harmonics"
+      ],
+      "sha256": "af19c0efa7533986d6e27e033c0e4595b3a3071e8c41e3a53e0d51bdfaed6349",
+      "duration_seconds": 72.0
+    },
+    "bgm_fruit": {
+      "file": "assets/bgm_fruit.wav",
+      "loop": true,
+      "gain": 0.72,
+      "title": "青竹拾果",
+      "bpm": 120,
+      "bars": 32,
+      "mode": "D major pentatonic with passing tones",
+      "instruments": [
+        "synthesized pipa",
+        "bamboo flute",
+        "wood blocks",
+        "hand drums",
+        "shakers"
+      ],
+      "sha256": "f3c3af1be989a2dd96e19da6914513f49c879ab01234540421b22ee407d2e077",
+      "duration_seconds": 64.0
+    },
+    "bgm_fight": {
+      "file": "assets/bgm_fight.wav",
+      "loop": true,
+      "gain": 0.72,
+      "title": "破阵山河",
+      "bpm": 112,
+      "bars": 32,
+      "mode": "D minor pentatonic",
+      "instruments": [
+        "synthesized low war drums",
+        "bowed string ensemble",
+        "pipa ostinato",
+        "wood blocks"
+      ],
+      "sha256": "416854cf1cd1f62a4cc81996203617e555e3e34699f96d7398cdea1670b7ddd1",
+      "duration_seconds": 68.5714375
+    },
+    "bgm_taiko": {
+      "file": "assets/bgm_taiko.wav",
+      "loop": false,
+      "gain": 0.72,
+      "title": "青岚鼓引 · 琴笛重编",
+      "bpm": 100,
+      "bars": 30,
+      "mode": "D minor pentatonic",
+      "chart_source": "../taiko/chart.py",
+      "chart_sha256": "b0d5f5131a7fc7aa743f5d182ad9f41b4a5be3ba3ebfc70bad4951dcd546c39a",
+      "chart_difficulties": [
+        "easy",
+        "normal"
+      ],
+      "chart_note_counts": {
+        "easy": 57,
+        "normal": 69
+      },
+      "instruments": [
+        "synthesized taiko",
+        "guqin",
+        "bamboo flute",
+        "shakers"
+      ],
+      "preserves_original_timeline": true,
+      "count_in_seconds": 2.4,
+      "final_hit_seconds": 69.6,
+      "sha256": "529d590d91d5948606850f2d7047d7f838a04911994e39e54e3547670d402ff9",
+      "duration_seconds": 72.0
+    },
+    "bgm_sword": {
+      "file": "assets/bgm_sword.wav",
+      "loop": true,
+      "gain": 0.72,
+      "title": "御风行云",
+      "bpm": 108,
+      "bars": 32,
+      "mode": "E minor pentatonic",
+      "sections": [
+        {
+          "title": "踏云",
+          "start_seconds": 0.0,
+          "bars": 8
+        },
+        {
+          "title": "逐风",
+          "start_seconds": 17.77777777777778,
+          "bars": 8
+        },
+        {
+          "title": "穿岚",
+          "start_seconds": 35.55555555555556,
+          "bars": 8
+        },
+        {
+          "title": "归峰",
+          "start_seconds": 53.333333333333336,
+          "bars": 8
+        }
+      ],
+      "instruments": [
+        "synthesized flowing guqin",
+        "soaring bamboo flute",
+        "pipa counter-phrases",
+        "hand drums",
+        "bell harmonics",
+        "shakers"
+      ],
+      "sha256": "c0c7579e743fd781931aff93befa187470c63cff942fb8b09bb9048baca1ad08",
+      "duration_seconds": 71.11110416666666
+    }
+  },
+  "effects": {
+    "ui_open": {
+      "file": "assets/ui_open.wav",
+      "loop": false,
+      "title": "开卷",
+      "priority": 35,
+      "cooldown_ms": 250,
+      "gain": 0.67,
+      "sha256": "2b3e3b1d0bf1139b3bbfffc7d1f87056696959a141c43957b3e0e18d29f689e1",
+      "duration_seconds": 0.78
+    },
+    "ui_select": {
+      "file": "assets/ui_select.wav",
+      "loop": false,
+      "title": "移签",
+      "priority": 20,
+      "cooldown_ms": 65,
+      "gain": 0.58,
+      "sha256": "108ba3a31f5b43143ebd8d311761df7a6e89f1b95d953a6fce103dfe61ccd86e",
+      "duration_seconds": 0.17
+    },
+    "ui_confirm": {
+      "file": "assets/ui_confirm.wav",
+      "loop": false,
+      "title": "落印",
+      "priority": 45,
+      "cooldown_ms": 160,
+      "gain": 0.72,
+      "sha256": "57220d106e9f5cc165d17dc7ff45c300b7b4f9b83f82a1a8c6762c72b6cc6b46",
+      "duration_seconds": 0.42
+    },
+    "ui_back": {
+      "file": "assets/ui_back.wav",
+      "loop": false,
+      "title": "收卷",
+      "priority": 40,
+      "cooldown_ms": 160,
+      "gain": 0.65,
+      "sha256": "fb68456f6ad5ebf509dea0c5b4b4b24cb7a868677d9685af1ac3681cfce0458a",
+      "duration_seconds": 0.34
+    },
+    "ink_stroke": {
+      "file": "assets/ink_stroke.wav",
+      "loop": false,
+      "title": "笔触",
+      "priority": 8,
+      "cooldown_ms": 160,
+      "gain": 0.24,
+      "sha256": "bb81b7e557f5584bf8ac1ffd29be6525d6ec732a2affd5c266f4475f6bab347d",
+      "duration_seconds": 0.22
+    },
+    "ink_save": {
+      "file": "assets/ink_save.wav",
+      "loop": false,
+      "title": "留墨",
+      "priority": 65,
+      "cooldown_ms": 450,
+      "gain": 0.76,
+      "sha256": "c7caa2daaec1c48653811b66f8b200002fe44d3d27c183733cb17a0029777a62",
+      "duration_seconds": 1.1
+    },
+    "ink_clear": {
+      "file": "assets/ink_clear.wav",
+      "loop": false,
+      "title": "拂纸",
+      "priority": 45,
+      "cooldown_ms": 350,
+      "gain": 0.53,
+      "sha256": "ffab413ab68fc444d1d733228994b7fb4d845ba798023b7536cd7f82955801d9",
+      "duration_seconds": 0.52
+    },
+    "fruit_slice": {
+      "file": "assets/fruit_slice.wav",
+      "loop": false,
+      "title": "破果",
+      "priority": 40,
+      "cooldown_ms": 42,
+      "gain": 0.79,
+      "sha256": "cc21ccc9d6b7776c60b518048fc21eff493bde82f9877b5a5a21d9f06b2235a7",
+      "duration_seconds": 0.21
+    },
+    "fruit_combo": {
+      "file": "assets/fruit_combo.wav",
+      "loop": false,
+      "title": "连斩",
+      "priority": 62,
+      "cooldown_ms": 180,
+      "gain": 0.77,
+      "sha256": "95b09373a72b44e296a22ea9f000a46f770001b0af54ada8fcb4d55ea4b4debc",
+      "duration_seconds": 0.48
+    },
+    "fruit_double": {
+      "file": "assets/fruit_double.wav",
+      "loop": false,
+      "title": "双倍",
+      "priority": 68,
+      "cooldown_ms": 380,
+      "gain": 0.76,
+      "sha256": "1c978675c8eebe6841f7718787da60070901cc1214ccc5b982f9b6eb91e54a69",
+      "duration_seconds": 0.85
+    },
+    "fruit_freeze": {
+      "file": "assets/fruit_freeze.wav",
+      "loop": false,
+      "title": "凝霜",
+      "priority": 68,
+      "cooldown_ms": 500,
+      "gain": 0.69,
+      "sha256": "62117200151b1595312b16b4b21f8615d040336830592d282d1c8a54d946ec49",
+      "duration_seconds": 1.0
+    },
+    "fruit_bomb": {
+      "file": "assets/fruit_bomb.wav",
+      "loop": false,
+      "title": "惊雷",
+      "priority": 90,
+      "cooldown_ms": 380,
+      "gain": 0.79,
+      "sha256": "2240b3799105bb98b7a8ec82eaa59df6c9021e196bf7726786ec4a4dae5afbd9",
+      "duration_seconds": 0.72
+    },
+    "fruit_miss": {
+      "file": "assets/fruit_miss.wav",
+      "loop": false,
+      "title": "落果",
+      "priority": 28,
+      "cooldown_ms": 200,
+      "gain": 0.55,
+      "sha256": "8d3ee2f7411f255b410cff8886eb1676adba1e88c5599610615297d345dd549f",
+      "duration_seconds": 0.26
+    },
+    "fight_swing": {
+      "file": "assets/fight_swing.wav",
+      "loop": false,
+      "title": "掠风",
+      "priority": 28,
+      "cooldown_ms": 80,
+      "gain": 0.66,
+      "sha256": "31f1b8892be21434dd90e12081432ae8eff879bcc68bd55ca7382e3595c85e32",
+      "duration_seconds": 0.2
+    },
+    "fight_hit": {
+      "file": "assets/fight_hit.wav",
+      "loop": false,
+      "title": "拳震",
+      "priority": 70,
+      "cooldown_ms": 55,
+      "gain": 0.82,
+      "sha256": "6b9b8fb44ee0b180d9ab8768a035037109cdffedc4e935f6714b00dcf613ca89",
+      "duration_seconds": 0.31
+    },
+    "fight_kick": {
+      "file": "assets/fight_kick.wav",
+      "loop": false,
+      "title": "踏岳",
+      "priority": 72,
+      "cooldown_ms": 100,
+      "gain": 0.82,
+      "sha256": "1b7905a5a0b40268541b60caac04e0beeeedb1dd89014340dad92ac8789021c7",
+      "duration_seconds": 0.43
+    },
+    "fight_block": {
+      "file": "assets/fight_block.wav",
+      "loop": false,
+      "title": "格挡",
+      "priority": 66,
+      "cooldown_ms": 80,
+      "gain": 0.73,
+      "sha256": "6e17718d436e0d7f4222ba893a0c1c7de1c87b99d094c256d75ef2f166dd1515",
+      "duration_seconds": 0.28
+    },
+    "fight_special": {
+      "file": "assets/fight_special.wav",
+      "loop": false,
+      "title": "破阵",
+      "priority": 94,
+      "cooldown_ms": 650,
+      "gain": 0.82,
+      "sha256": "820b3993ad414be0b6a1cad6301ae8a5e8bc24cecccf34bd517cf2ca69b624d4",
+      "duration_seconds": 1.08
+    },
+    "fight_win": {
+      "file": "assets/fight_win.wav",
+      "loop": false,
+      "title": "凯旋",
+      "priority": 100,
+      "cooldown_ms": 1200,
+      "gain": 0.81,
+      "sha256": "adc8dbff348b7e132e7b1737173ecbe1f142a4fbbe50609f936c78670bd1f65f",
+      "duration_seconds": 1.55
+    },
+    "fight_lose": {
+      "file": "assets/fight_lose.wav",
+      "loop": false,
+      "title": "惜败",
+      "priority": 100,
+      "cooldown_ms": 1200,
+      "gain": 0.71,
+      "sha256": "32ad616d7db04375ab048ba32f76ac62a4f5378ad155dbbd3e1c12e151938bf0",
+      "duration_seconds": 1.24
+    },
+    "taiko_left": {
+      "file": "assets/taiko_left.wav",
+      "loop": false,
+      "title": "左鼓",
+      "priority": 78,
+      "cooldown_ms": 35,
+      "gain": 0.8,
+      "sha256": "23db839e5a6bacb3db6715f64d65ae8b8163823c3a457ddf845a462da7d3dad8",
+      "duration_seconds": 0.36
+    },
+    "taiko_right": {
+      "file": "assets/taiko_right.wav",
+      "loop": false,
+      "title": "右鼓",
+      "priority": 78,
+      "cooldown_ms": 35,
+      "gain": 0.8,
+      "sha256": "ac210f4072cf8318ea984ea8fb9c388a0bb2cbf065d0afd4093adf95644ccba0",
+      "duration_seconds": 0.28
+    },
+    "taiko_both": {
+      "file": "assets/taiko_both.wav",
+      "loop": false,
+      "title": "合鼓",
+      "priority": 83,
+      "cooldown_ms": 35,
+      "gain": 0.83,
+      "sha256": "04732a93b6467d038545cf2490d07ef3f33ea6bc77ee3ddc254a8b9a94ced126",
+      "duration_seconds": 0.44
+    },
+    "taiko_miss": {
+      "file": "assets/taiko_miss.wav",
+      "loop": false,
+      "title": "轻枯",
+      "priority": 32,
+      "cooldown_ms": 100,
+      "gain": 0.42,
+      "sha256": "4fbac33391e031ebe3f6413e7af3334fb2418caca0f7535e932f589d961c4298",
+      "duration_seconds": 0.13
+    },
+    "taiko_finish": {
+      "file": "assets/taiko_finish.wav",
+      "loop": false,
+      "title": "曲终",
+      "priority": 100,
+      "cooldown_ms": 1000,
+      "gain": 0.8,
+      "sha256": "4f7ebf2fac0ce7b433338c2fb1aa914ed1901967e9296a684d2613c9f7746221",
+      "duration_seconds": 1.7
+    },
+    "sword_shot": {
+      "file": "assets/sword_shot.wav",
+      "loop": false,
+      "title": "飞剑",
+      "priority": 20,
+      "cooldown_ms": 65,
+      "gain": 0.43,
+      "sha256": "125e110a3d3b809e45b230957a8dcd51043666c1a42f6aac96fe0dbcf97c0a99",
+      "duration_seconds": 0.115
+    },
+    "sword_hit": {
+      "file": "assets/sword_hit.wav",
+      "loop": false,
+      "title": "剑鸣",
+      "priority": 42,
+      "cooldown_ms": 70,
+      "gain": 0.59,
+      "sha256": "bae511132b3a350e899de2bf923a4449573aea08b7b06494ab4a5d680601fc02",
+      "duration_seconds": 0.21
+    },
+    "sword_kill": {
+      "file": "assets/sword_kill.wav",
+      "loop": false,
+      "title": "破邪",
+      "priority": 53,
+      "cooldown_ms": 90,
+      "gain": 0.66,
+      "sha256": "a96a92351d2b3dcd823fd749f57bead7a342c3d127551706e54fb131dd59cc09",
+      "duration_seconds": 0.47
+    },
+    "sword_hurt": {
+      "file": "assets/sword_hurt.wav",
+      "loop": false,
+      "title": "受创",
+      "priority": 78,
+      "cooldown_ms": 220,
+      "gain": 0.78,
+      "sha256": "29cc4f1ae1762b725cc836a9c7ddabe10f19367672618a85d96d161472e6f63c",
+      "duration_seconds": 0.52
+    },
+    "sword_collect": {
+      "file": "assets/sword_collect.wav",
+      "loop": false,
+      "title": "纳灵",
+      "priority": 35,
+      "cooldown_ms": 90,
+      "gain": 0.55,
+      "sha256": "198967fe2dbc87762a99df724fe917534d8cd0ab04909e5aeb8efd4f0b7b5891",
+      "duration_seconds": 0.42
+    },
+    "sword_special": {
+      "file": "assets/sword_special.wav",
+      "loop": false,
+      "title": "万剑归宗",
+      "priority": 92,
+      "cooldown_ms": 650,
+      "gain": 0.82,
+      "sha256": "0d9e2348233174900b9c0172d3d4ba205d28cb573fe54e2167c0bc579697d424",
+      "duration_seconds": 1.2
+    },
+    "sword_boss": {
+      "file": "assets/sword_boss.wav",
+      "loop": false,
+      "title": "劫云临阵",
+      "priority": 96,
+      "cooldown_ms": 1400,
+      "gain": 0.81,
+      "sha256": "a16ff357aaf56dcf92fb8b7d6eddfb975922f790c0391e842e695cbea18a5d40",
+      "duration_seconds": 1.46
+    },
+    "sword_win": {
+      "file": "assets/sword_win.wav",
+      "loop": false,
+      "title": "凌云凯归",
+      "priority": 100,
+      "cooldown_ms": 1600,
+      "gain": 0.79,
+      "sha256": "0428d3673f38f8c12f7972cafccfcc837010c8b39fbd7273479027b205252d87",
+      "duration_seconds": 1.82
+    },
+    "sword_lose": {
+      "file": "assets/sword_lose.wav",
+      "loop": false,
+      "title": "剑意未尽",
+      "priority": 100,
+      "cooldown_ms": 1400,
+      "gain": 0.71,
+      "sha256": "0f61eb573c677a6e18d16aa4711cee84c8ab9308ba6fe3ac5c497d680b881600",
+      "duration_seconds": 1.42
+    }
+  }
+}

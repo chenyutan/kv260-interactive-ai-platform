@@ -1,0 +1,25 @@
+[Unit]
+Description=Fruit game pose-only Hourglass consumer
+Requires=bodyink-camera.service bodyink-dpu.service
+After=bodyink-camera.service bodyink-dpu.service
+Conflicts=bodyink-live.service
+
+[Service]
+Type=simple
+User=ubuntu
+SupplementaryGroups=video render
+Environment=LD_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=OMP_WAIT_POLICY=PASSIVE
+Environment=BODYINK_RAW_PREVIEW=1
+Environment=BODYINK_DIRECT_PL_INPUT=1
+Environment=BODYINK_CONTINUOUS_ROI=1
+Environment=BODYINK_BODY_CROP=1
+WorkingDirectory=/home/ubuntu/bodyink-live
+ExecStart=/usr/bin/python3 /home/ubuntu/fruit-slice/game/board/pose_app.py --target-fps 60 --preview-fps 1 --enabled-actions A01 A02 A03 A04 A06 --snapshot-buffer mmap --preprocess-backend pl
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

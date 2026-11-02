@@ -1,0 +1,20 @@
+{
+  "tool": "built-in image_gen",
+  "created": "2026-09-26",
+  "review_status": "approved_by_user",
+  "reviewed_at": "2026-09-26",
+  "review_feedback": "美术效果还不错",
+  "runtime_ai_generation": false,
+  "assets": [
+    {
+      "file": "landscape.png",
+      "prompt": "Use case: stylized-concept. Asset type: production background panorama for an original Chinese ink painting flying-sword game titled Yu Jian Shan He (no lettering in this image). Create one exceptionally beautiful wide panoramic Chinese blue-green shanshui landscape, at least 2.5:1 landscape aspect if possible, rich museum-quality mineral pigment and expressive ink brushwork on ivory xuan paper. A continuous journey from an emerald bamboo ravine on the far left to majestic layered azurite and malachite mountain pinnacles in the middle and a distant ancient circular stone mountain pass near the far right, connected by flowing luminous white mist and a thin winding river deep below. Horizontal side-scrolling aerial viewpoint. Dramatic near mountains occupy bottom 20-30 percent; towering peaks recede into atmospheric depth in upper half. Keep the central horizontal flight corridor at y=35-65 percent mostly luminous pale mist and empty air for gameplay objects to be drawn over it, and keep top 12 percent calm for HUD. Painterly rock texture, dynamic dry-brush dark strokes, distant tiny traditional pavilion on a cliff, sparse vermilion and antique gold accents, real national-style Chinese ink/colour painting feel with sophisticated strong dark-to-light contrast. Elegant adventurous atmosphere. No character, human, sword, creatures, game interface, text, seal, watermark or border. Not anime, not photorealism, not 3D, not plain vector illustration. Entire image is one coherent continuous landscape, not panels or a collage.",
+      "source": "project-generated artwork"
+    },
+    {
+      "file": "gameplay-atlas.png",
+      "prompt": "Use case: stylized-concept. Asset type: production sprite atlas for an original Chinese ink-and-mineral-color flying sword game. A single square transparent PNG image, arranged as a precise regular 2-column by 2-row sprite atlas with FOUR completely isolated separate objects, each centered in its quadrant, wide transparent margins at all quadrant boundaries, no elements crossing quadrants. Background fully transparent, no white or checkerboard painted backdrop. TOP LEFT: an exquisite slender ancient Chinese straight flying sword, horizontal, handle on left and sharp blade pointing right; dark indigo steel, jade fittings, antique gold engraving, elegant crimson tassel curving behind handle, strong readable silhouette and refined painterly brush texture. TOP RIGHT: a three-quarter sideview floating jagged Chinese scholar rock, dark ink-grey and malachite with tiny moss and dry brush cracks, compact silhouette. BOTTOM LEFT: a large ancient circular jade-and-stone gate with central transparent hole, engraved worn ring, asymmetrical ink weathering, warm gold flecks, a few tiny clouds around base, readable as a pass-through ring. BOTTOM RIGHT: a spectacular large circular enchanted sealing sigil, dark indigo-and-vermilion calligraphic swirling ink brush ring with antique gold concentric arcs and a small strong crimson diamond-like central core, no actual text or Chinese characters. All four objects match genuine Chinese shanshui ink and mineral pigment illustration style, refined and high contrast, made for a premium game. No typography, label, UI, grid lines, border, humans, watermark, 3D render, cartoon faces or anime. Objects occupy at most 75% width/height of each quadrant so they never touch another quadrant.",
+      "source": "project-generated artwork"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "provenance": "AI-generated original project art via built-in image_gen",
+  "approved_direction": "A gongbi characters with B directional blue-grey ink effects",
+  "background": "Warm ivory and low-saturation warm-grey; reserve jade, cobalt, cinnabar and violet for foreground",
+  "files": [
+    {
+      "name": "boss.png",
+      "width": 1536,
+      "height": 1024,
+      "png_color_type": 6,
+      "bytes": 2563732,
+      "sha256": "9918169ce29465435e3a301a58a6d36decd929695d59bee7ecf839d5b5d4c8b1"
+    },
+    {
+      "name": "effects-atlas.png",
+      "width": 1448,
+      "height": 1086,
+      "png_color_type": 6,
+      "bytes": 2202093,
+      "sha256": "102bac59b10de9cdc688c7148be41c8a3d82229d35a584f7f3b9cbedd96421b3"
+    },
+    {
+      "name": "elite.png",
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 6,
+      "bytes": 2153193,
+      "sha256": "d77bdcd180c0370106d30964bd1fa0c004fbf4df177c933dc5a7fa8b7fb905d7"
+    },
+    {
+      "name": "enemy-blue.png",
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 6,
+      "bytes": 1626767,
+      "sha256": "e4b4d1485c764ceeb1d6f4a4b9ba74d0383c4b225e0c95e26f9d86cc8d972116"
+    },
+    {
+      "name": "enemy-red.png",
+      "width": 1254,
+      "height": 1254,
+      "png_color_type": 6,
+      "bytes": 1345598,
+      "sha256": "11915228eb20f0f4d8e9d207581a0ba3105b9cde34e66a39498144f3ed2c69a8"
+    },
+    {
+      "name": "player-strip.png",
+      "width": 2172,
+      "height": 724,
+      "png_color_type": 6,
+      "bytes": 1217221,
+      "sha256": "6f3e8623bb4da6e5a776d1f4a7c00d0c65198dfc91831468c4a0d7b29083a82e"
+    },
+    {
+      "name": "warm-mist-background.png",
+      "width": 1672,
+      "height": 941,
+      "png_color_type": 2,
+      "bytes": 1800728,
+      "sha256": "9e0ffc498fe538de1e0fc650a10d340d96770c489515aab1b3c650f668e92d86"
+    }
+  ],
+  "player_strip": {
+    "columns": 3,
+    "order": [
+      "left",
+      "neutral",
+      "right"
+    ]
+  },
+  "effects_atlas": {
+    "columns": 4,
+    "rows": 3,
+    "order": [
+      "hit",
+      "defeat",
+      "special"
+    ]
+  },
+  "notes": [
+    "Pixel RGB under alpha zero is ignored by Cairo; do not judge transparent sprites by RGB-only preview",
+    "Boss first generation retained; the second alpha edit was not adopted",
+    "Art does not change collision, model, control, audio or game speed"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "sample_rate": 48000,
+  "channels": 2,
+  "format": "PCM S16LE",
+  "provenance": "Original deterministic pentatonic plucked-string/flute chase composition and synthesized effects; no external samples or copied melodies.",
+  "tracks": {
+    "bgm_runner": {
+      "file": "bgm_runner.wav",
+      "sha256": "50c43e3d08f20912fd163a9e7622b65b11d3459e9b6881b31ea13f596a778162",
+      "duration_seconds": 32.0,
+      "gain": 0.76,
+      "loop": true,
+      "cooldown_ms": 0,
+      "priority": 0
+    }
+  },
+  "effects": {
+    "sfx_runner_jump": {
+      "file": "sfx_runner_jump.wav",
+      "sha256": "5ce6f7262de0ca63ec5a067f60d8df1e0f870e895be8d2eeeb38da25da25feee",
+      "duration_seconds": 0.295,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "sfx_runner_slide": {
+      "file": "sfx_runner_slide.wav",
+      "sha256": "7a42f8f6e8f42b7cac24109cb69f80a77aa6f52e6e0f5a907ddf8c7f6c7b467b",
+      "duration_seconds": 0.31,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "sfx_runner_lane": {
+      "file": "sfx_runner_lane.wav",
+      "sha256": "c7f3009532e9f0c259562742552c693490ebbe24304f01d0676a6a43109e7e3a",
+      "duration_seconds": 0.2,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "sfx_runner_coin": {
+      "file": "sfx_runner_coin.wav",
+      "sha256": "5f5bef0ab873be3d4dc83140b24c54ab8dc54c8ad0971acb7b903bfb882dc320",
+      "duration_seconds": 0.27,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 35,
+      "priority": 1
+    },
+    "sfx_runner_power": {
+      "file": "sfx_runner_power.wav",
+      "sha256": "150cf443746ee3977f0c931f19ed7a05c885b67dfcae2d7e8a51ca02ee207048",
+      "duration_seconds": 0.52,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 3
+    },
+    "sfx_runner_hit": {
+      "file": "sfx_runner_hit.wav",
+      "sha256": "6b0ac8c47e405da1b9f8cb22af84d5a78808185b7e079b56f4fd145b648f8d73",
+      "duration_seconds": 0.355,
+      "gain": 0.76,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 4
+    },
+    "sfx_runner_over": {
+      "file": "sfx_runner_over.wav",
+      "sha256": "52697bb12655240d00e74e61560add328b8211017c6c7a7e358d29f3ecf2595e",
+      "duration_seconds": 0.855,
+      "gain": 0.82,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 6
+    }
+  }
+}

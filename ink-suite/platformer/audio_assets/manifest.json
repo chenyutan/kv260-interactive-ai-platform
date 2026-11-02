@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "sample_rate": 48000,
+  "channels": 2,
+  "format": "PCM S16LE",
+  "provenance": "Original algorithmic pentatonic chiptune; no external samples or copied melodies.",
+  "tracks": {
+    "bgm_platformer": {
+      "file": "bgm_platformer.wav",
+      "sha256": "786833559e4e76a96248bbd45faae1fb2f919b02070e3d5a3fd4bcb0eae6cf8c",
+      "duration_seconds": 32.0,
+      "gain": 0.72,
+      "loop": true,
+      "cooldown_ms": 0,
+      "priority": 0
+    }
+  },
+  "effects": {
+    "platformer_jump": {
+      "file": "platformer_jump.wav",
+      "sha256": "5e8420e05fe8980a52babd52ed566666ead3c70bc31a1ff7446f2abd490be778",
+      "duration_seconds": 0.165,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "platformer_coin": {
+      "file": "platformer_coin.wav",
+      "sha256": "2eba91d2ad44e8b9b43bb14a4961f1ef3eb4313f2a09ee74aa4f612e00c43267",
+      "duration_seconds": 0.12,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "platformer_power": {
+      "file": "platformer_power.wav",
+      "sha256": "275d7f25a6ed23bd08e3e748d0a8fc6070aa2b899a6a74882df25726e310e095",
+      "duration_seconds": 0.42,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 2
+    },
+    "platformer_stomp": {
+      "file": "platformer_stomp.wav",
+      "sha256": "0d924469772b8fade29c147fafe57a62b93b844db42dc2e38a67d7d8cf9c5f4b",
+      "duration_seconds": 0.12,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "platformer_hurt": {
+      "file": "platformer_hurt.wav",
+      "sha256": "54a659e18b4a6478863cba7105d2b56ab8acd7bc86619fc8d6bd9dee9909dbe0",
+      "duration_seconds": 0.18,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 3
+    },
+    "platformer_die": {
+      "file": "platformer_die.wav",
+      "sha256": "abf72095038c900c29910f74b03c8ce10364422913332447438fa99d660570a0",
+      "duration_seconds": 0.6,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 5
+    },
+    "platformer_pipe": {
+      "file": "platformer_pipe.wav",
+      "sha256": "6f233fd850254dceea14ab52fd4dff40a6b83a6e4488c125419c5a3fb4581052",
+      "duration_seconds": 0.24,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 1
+    },
+    "platformer_checkpoint": {
+      "file": "platformer_checkpoint.wav",
+      "sha256": "f104bd13974db5732327b246170d2857f4f7e389c2ccfda48ec74dffdca5321c",
+      "duration_seconds": 0.24,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 2
+    },
+    "platformer_clear": {
+      "file": "platformer_clear.wav",
+      "sha256": "b945566a5cb49f89ba8ecfa72bfe517d5039dac96772e26755049f58a770dbd6",
+      "duration_seconds": 0.6,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 4
+    },
+    "platformer_win": {
+      "file": "platformer_win.wav",
+      "sha256": "7cd150b78901496914d96166ce121866e9062152e2fac16e06ca04919e123d39",
+      "duration_seconds": 0.91,
+      "gain": 0.72,
+      "loop": false,
+      "cooldown_ms": 55,
+      "priority": 6
+    }
+  }
+}

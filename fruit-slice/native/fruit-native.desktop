@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=彩墨切水果
+Comment=启动摄像头与双腕识别，打开原生游戏
+Exec=/usr/bin/python3 /home/ubuntu/fruit-slice/native/launch_game.py
+Path=/home/ubuntu/fruit-slice/native
+Terminal=false
+Categories=Game;

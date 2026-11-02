@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable scoped USB Camera3 YUYV bandwidth correction
+After=systemd-modules-load.service
+Before=bodyink-camera.service
+ConditionPathExists=/sys/module/uvcvideo/parameters/bodyink_ss_bandwidth
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/bodyink-enable-bandwidth
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

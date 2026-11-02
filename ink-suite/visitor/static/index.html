@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#204b40">
+  <title>墨境 · 我的空间</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css?v=coach-20261024">
+  <script src="/static/app.js?v=coach-20261024" defer></script>
+</head>
+<body class="account-app" data-auth="loading" data-page="overview">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="墨境首页"><span class="brand-seal">墨</span><span>墨境<small>INK REALM</small></span></a>
+    <nav aria-label="账户导航"><span id="account-label" hidden></span><button id="logout" type="button" hidden>退出登录</button><a id="my-link" href="#private" hidden>我的空间</a></nav>
+  </header>
+  <section id="account-loading" class="account-loading" role="status">正在打开我的空间…</section>
+  <section id="auth-screen" class="auth-screen" aria-labelledby="auth-title" hidden>
+    <div class="auth-story"><p class="eyebrow">娱乐 · 健康 · 创作</p><h1 id="auth-title">精彩留在这里</h1><p>收藏自己的水墨作品，记录每一次游玩。</p><div class="auth-landscape"><img src="/static/landscape.webp" width="1280" height="480" alt="淡彩山水"></div><div class="auth-features"><span>作品原图</span><span>战绩图片</span><span>AI 助手</span></div></div>
+    <div class="auth-card"><div class="auth-tabs" role="tablist" aria-label="登录或注册"><button id="auth-login-tab" type="button" role="tab" aria-selected="true">登录</button><button id="auth-register-tab" type="button" role="tab" aria-selected="false">注册账户</button></div><h2 id="auth-form-title">欢迎回来</h2><p id="auth-intro">登录后，只查看与管理自己的记录。</p><form id="auth-form"><label for="auth-username">用户名</label><input id="auth-username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="32" placeholder="输入用户名" required><div id="auth-name-row" hidden><label for="auth-name">显示昵称 <span>（可选）</span></label><input id="auth-name" name="name" type="text" autocomplete="nickname" maxlength="24" placeholder="显示在个人空间中"></div><label for="auth-password">密码</label><div class="password-field"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="输入密码" required><button id="auth-show-password" type="button" aria-label="显示密码">显示</button></div><div id="auth-confirm-row" hidden><label for="auth-confirm">确认密码</label><input id="auth-confirm" type="password" autocomplete="new-password" maxlength="128" placeholder="再次输入密码"></div><p id="auth-feedback" class="form-feedback" role="status" aria-live="polite"></p><button id="auth-submit" class="button button-primary" type="submit">登录我的空间</button></form><p id="auth-scan-note" class="auth-scan-note" hidden>已收到板卡二维码。登录后可将本次游玩保存到这个账户。</p><p class="auth-footnote">手机与 KV260 连接同一网络即可使用。</p></div>
+  </section>
+  <main id="account-workspace" hidden>
+    <section class="hero" aria-labelledby="title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> 我的空间</p>
+        <h1 id="title">我的游玩记录</h1>
+        <p id="hero-description" class="hero-description">让每一次体验，都有自己的收藏。</p>
+        <div class="session-meta"><span id="session-badge" class="badge">正在读取</span><span id="session-date"></span></div>
+        <div id="hero-stats" class="hero-stats" hidden>
+          <div><strong id="art-count">0</strong><span>幅作品</span></div>
+          <div><strong id="round-count">0</strong><span>局完成</span></div>
+          <div><strong id="realm-count">0</strong><span>种游戏</span></div>
+        </div>
+      </div>
+      <div class="hero-landscape" aria-hidden="true">
+        <img src="/static/landscape.webp" width="1280" height="480" alt="">
+        <span class="landscape-caption">保存作品，查看成绩</span>
+      </div>
+    </section>
+    <div id="connection-banner" class="connection-banner" role="status" hidden><span id="status"></span><button id="retry" type="button">重新连接</button></div>
+    <section id="claim-panel" class="claim-panel" hidden aria-labelledby="claim-title"><div><span class="claim-icon" aria-hidden="true">＋</span><h2 id="claim-title">保存这次游玩</h2><p>将刚扫描的板卡游玩记录关联到当前账户。只有这个账户可以查看作品与报告。</p></div><div class="claim-actions"><button id="claim-session" type="button" class="button button-primary">关联到我的账户</button><button id="claim-dismiss" type="button" class="button button-secondary">稍后再说</button></div><p id="claim-feedback" class="form-feedback" role="status"></p></section>
+    <section id="session-selector" class="session-selector" hidden><div><label for="account-session">正在查看的游玩</label><select id="account-session"></select></div><button id="account-refresh" class="button button-secondary" type="button">刷新记录</button><p id="account-feedback" class="form-feedback" role="status"></p></section>
+    <section id="account-empty" class="account-empty" hidden><div class="empty-art" aria-hidden="true">墨</div><h2>从第一份记录开始</h2><p>在板卡主菜单选择“扫码下载”，用这部手机扫码，再将本次游玩关联到账户。</p><button id="empty-refresh" type="button" class="button button-primary">已扫码，刷新记录</button><button id="empty-project" type="button" class="button button-secondary">了解这个项目</button></section>
+    <section id="private" hidden>
+      <div class="souvenir-grid" data-space-panel="overview">
+        <section class="report-panel" aria-labelledby="report-title">
+          <p class="eyebrow">游玩报告</p><h2 id="report-title">下载战绩图片</h2>
+          <p class="section-intro">将本次作品和游戏成绩整理为图片，保存到手机。</p>
+          <a id="report-download" class="button button-primary download-main" href="#">下载战绩图片</a>
+          <div id="report-pages" class="report-page-links" hidden></div>
+          <div class="report-preview-teaser" id="report-cover">
+            <div class="mini-seal">报告</div><p>墨境 · 游玩报告</p><h3 id="report-name">我的游玩报告</h3>
+            <div class="cover-rule"></div><div class="cover-stats"><span id="cover-rounds">暂无成绩</span><span id="cover-artworks">暂无作品</span></div>
+            <div class="cover-mountains" aria-hidden="true"><img src="/static/landscape.webp" width="1280" height="480" alt="" loading="lazy"></div>
+            <button id="preview-report" type="button" class="preview-button">预览完整长图</button>
+          </div>
+          <p id="report-feedback" class="form-feedback" role="status"></p><a id="report-source-fallback" class="report-fallback" hidden>下载未更名源图</a>
+          <p id="report-hint" class="fine-print">PNG 原图，可保存到手机相册；预览后也可长按图片保存。</p>
+          <details class="other-downloads"><summary>完整礼包与其他报告格式</summary><div class="format-links" id="downloads"></div><p class="fine-print">礼包包含作品与报告；HTML 可离线阅读或打印为 PDF。</p></details>
+        </section>
+        <section class="name-panel" aria-labelledby="name-title">
+          <span class="panel-number" aria-hidden="true">姓名</span><p class="eyebrow">设置姓名</p><h2 id="name-title">设置姓名<br>用于排行榜</h2>
+          <p class="section-intro">姓名会显示在战绩图片和排行榜上，随时可以修改。</p>
+          <form id="name-form"><label for="name">你的名字</label><input id="name" maxlength="24" required placeholder="例如：小明" autocomplete="nickname"><button id="save-name" type="submit" class="button button-secondary">保存姓名</button><p id="name-feedback" class="form-feedback" role="status"></p></form>
+          <div class="session-note"><span class="note-mark" aria-hidden="true">记</span><p id="archive-note">游玩结束时，在板卡主菜单选择“结束游玩”。此链接会保留你的作品与成绩。</p></div>
+        </section>
+      </div>
+      <section id="ai-assistant" class="content-section ai-assistant" data-space-panel="ai" aria-labelledby="ai-title" hidden>
+        <div class="ai-engine"><img class="ai-whale" src="/static/deepseek-whale.svg" width="56" height="41" alt="DeepSeek 鲸鱼标志"><span>DeepSeek <small>AI ASSISTANT</small></span><span id="ai-service-state" class="section-count">正在连接</span></div>
+        <div class="section-heading"><div><p class="eyebrow">DEEPSEEK</p><h2 id="ai-title">聊一聊，再开始</h2></div></div>
+        <p class="section-intro">先选择内容，再选择想问的问题。</p>
+        <div class="ai-navigation"><p class="ai-group-label">内容分类</p><div id="ai-kind" class="ai-kind" role="group" aria-label="内容分类"><button type="button" data-kind="guide" aria-pressed="true"><strong>项目指南</strong><small>玩法与操作</small></button><button type="button" data-kind="creation" aria-pressed="false"><strong>创作方案</strong><small>水墨灵感</small></button><button type="button" data-kind="review" aria-pressed="false"><strong>成绩复盘</strong><small>回顾游玩</small></button><button type="button" data-kind="health" aria-pressed="false"><strong>训练建议</strong><small>根据跟练记录</small></button><button id="ai-system-entry" type="button" class="ai-system-entry" aria-pressed="false"><strong>项目介绍</strong><small>技术与应用</small></button></div></div>
+        <div class="ai-tools" role="group" aria-label="历史记录工具"><span class="ai-group-label">记录工具</span><button id="ai-refresh" class="button button-secondary" type="button">刷新结果</button><button id="ai-clear" class="button button-secondary" type="button">清空我的AI建议</button></div>
+        <p id="ai-readonly" class="ai-notice" role="status" hidden></p>
+        <button id="ai-compose-toggle" class="ai-compose-toggle" type="button" aria-expanded="true" aria-controls="ai-form">收起提问区域 <span aria-hidden="true">⌃</span></button>
+        <form id="ai-form" class="ai-compose">
+          <div id="ai-project-area" class="ai-project-area" hidden><label for="ai-project">选择项目</label><div class="ai-project-row"><select id="ai-project" aria-label="选择娱乐、健康或创作项目"></select><button id="ai-local-help" class="button button-secondary" type="button">本地说明</button></div><p class="fine-print">本地说明不调用 AI，网络中断时也能查看。</p></div>
+          <section id="ai-health-summary" class="ai-health-summary" aria-label="我的跟练记录" hidden><span class="ai-group-label">我的跟练记录</span><h3 id="ai-health-title"></h3><p id="ai-health-evidence"></p><p id="ai-health-scope" class="fine-print"></p></section>
+          <section id="ai-help" class="ai-local-help" aria-label="项目本地说明" hidden><div class="ai-help-heading"><span class="ai-local-label">固定说明 · 非AI历史 · 无需联网</span><button id="ai-help-close" type="button" aria-label="收起本地说明">收起</button></div><h3 id="ai-help-title"></h3><p id="ai-help-summary"></p><ul id="ai-help-tips"></ul></section>
+          <div id="ai-presets" class="ai-presets" role="group" aria-label="建议主题"></div>
+          <label for="ai-text">补充想法 <span>（可选）</span></label>
+          <textarea id="ai-text" maxlength="280" rows="3" placeholder="例如：我想画一幅有山、有竹的作品。" aria-describedby="ai-text-count ai-data-note"></textarea>
+          <div class="ai-compose-footer"><span id="ai-text-count">0 / 280 字</span><button id="ai-submit" class="button button-primary" type="submit" disabled>生成建议</button></div>
+          <div id="ai-thinking" class="ai-thinking" role="status" aria-live="polite" hidden><span class="ai-thinking-orb" aria-hidden="true"></span><div><strong>正在思考<span aria-hidden="true">…</span></strong><small>DeepSeek 正在整理回答，请稍候</small></div></div>
+          <p id="ai-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        </form>
+        <p id="ai-data-note" class="fine-print ai-data-note">点击生成后，KV260 联网请求 DeepSeek，发送补充文字与必要的项目说明、创作规则、已完成游戏摘要或本账户的跟练摘要。不发送照片、骨架或姓名，不自动操作画卷和游戏。结果生成并校验后逐字展示，可随时显示全文。训练建议依据可观察的课程记录，不作身体诊断或疗效判断。</p>
+        <div class="ai-results-heading"><h3 id="ai-results-title">我的建议</h3></div>
+        <p class="ai-clear-note fine-print">手机仅清除当前账户的 AI 建议。跟练记录、作品与成绩会保留；板卡上的“清空全部AI建议”清理整台设备的 AI 历史。</p>
+        <p id="ai-load-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        <div id="ai-jobs" class="ai-job-list"></div>
+      </section>
+      <section id="photo-studio" class="content-section photo-studio" data-space-panel="photos" aria-labelledby="photo-title" hidden>
+        <div class="section-heading"><div><p class="eyebrow">照片创作</p><h2 id="photo-title">将风景变成水墨画</h2></div><span class="section-count">KV260 独立处理</span></div>
+        <p class="section-intro photo-intro">选一张喜欢的风景照，生成带有纸纹、笔墨与设色的作品。照片不会发送至云端；完成后可在这里对照原图、保存作品。</p>
+        <div id="photo-readonly" class="photo-readonly" role="status" hidden>本次游玩已结束，可以查看和下载已有作品。要上传新照片，请在板卡主菜单重新扫码。</div>
+        <form id="photo-form" class="photo-upload-panel">
+          <div class="photo-file-area">
+            <label class="photo-file-picker" for="photo-file"><span class="photo-file-symbol" aria-hidden="true">＋</span><strong>选择风景照片</strong><span>相册、文件或已连接的存储设备</span><input id="photo-file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"></label>
+            <div id="photo-selection" class="photo-selection" hidden><img id="photo-file-preview" alt="待处理的照片"><div><strong id="photo-file-name"></strong><span id="photo-file-size"></span><button id="photo-remove" type="button">重新选择</button></div></div>
+            <p class="fine-print">支持 JPG、PNG、WebP，单张不超过 16 MiB。山水、园林、建筑等光线清晰的风景，更适合展示。</p>
+          </div>
+          <div class="photo-upload-options"><fieldset id="photo-style-group"><legend>选择风格</legend><label class="photo-style"><input type="radio" name="photo-style" value="color" checked><span class="photo-style-swatch photo-swatch-color" aria-hidden="true"></span><span><strong>青绿淡彩</strong><small>保留色彩，叠加笔墨与纸纹</small></span></label><label class="photo-style"><input type="radio" name="photo-style" value="ink"><span class="photo-style-swatch photo-swatch-ink" aria-hidden="true"></span><span><strong>水墨</strong><small>以墨色表现山川与明暗层次</small></span></label></fieldset><button id="photo-submit" type="submit" class="button button-primary" disabled>上传并生成</button><p class="fine-print">高清生成约需2～3分钟，处理期间可返回其他页面，完成后再查看。</p></div>
+          <p id="photo-upload-feedback" class="form-feedback photo-upload-feedback" role="status" aria-live="polite"></p>
+        </form>
+        <div class="photo-jobs-heading"><h3>照片作品</h3><button id="photo-refresh" type="button">刷新进度</button></div>
+        <p id="photo-load-feedback" class="form-feedback" role="status" aria-live="polite"></p><div id="photo-jobs" class="photo-job-list"></div>
+      </section>
+      <section id="gallery" class="content-section" data-space-panel="gallery" aria-labelledby="gallery-title">
+        <div class="section-heading"><div><p class="eyebrow">身随墨动</p><h2 id="gallery-title">我的作品</h2></div><span id="gallery-count" class="section-count">0 幅作品</span></div>
+        <div id="artworks" class="artwork-grid"></div><div id="gallery-pager" class="content-pager" hidden></div>
+      </section>
+      <section id="results" class="content-section" data-space-panel="results" aria-labelledby="results-title">
+        <div class="section-heading"><div><p class="eyebrow">游玩记录</p><h2 id="results-title">游戏战绩</h2></div><span id="result-count" class="section-count">0 局记录</span></div>
+        <div id="rounds" class="round-grid"></div><div id="rounds-pager" class="content-pager" hidden></div><p id="ranking-note" class="fine-print ranking-note"></p>
+      </section>
+    </section>
+    <section id="rankings" class="content-section rankings" data-space-panel="results" aria-labelledby="rankings-title">
+      <div class="section-heading"><div><p class="eyebrow">游戏排名</p><h2 id="rankings-title">排行榜</h2></div><a href="/leaderboard" class="text-link">查看榜单</a></div>
+      <p class="section-intro">各玩法、难度与判定档分别排名。</p><div class="board-filter-row"><label for="board-filter">选择游戏</label><select id="board-filter"><option value="">全部游戏</option></select></div><div id="boards" class="board-grid"></div><div id="boards-pager" class="content-pager" hidden></div>
+    </section>
+  </main>
+  <nav id="space-navigation" class="space-navigation" aria-label="个人空间" hidden><button type="button" data-space="overview" aria-current="page"><span aria-hidden="true">⌂</span><strong>概览</strong></button><button type="button" data-space="gallery"><span aria-hidden="true">▧</span><strong>作品</strong></button><button type="button" data-space="results"><span aria-hidden="true">▥</span><strong>成绩</strong></button><button type="button" data-space="ai"><span aria-hidden="true">✦</span><strong>AI 助手</strong></button><button type="button" data-space="photos"><span aria-hidden="true">＋</span><strong>照片水墨</strong></button></nav>
+  <footer><div class="footer-brand">墨境 <span>INK REALM</span></div><p>保存作品，查看成绩。</p><div class="access-line"><span id="access-badge" class="access-badge">正在确认访问方式</span><span id="access-detail">请保留自己的专属链接，之后仍可回来下载。</span></div></footer>
+  <dialog id="image-viewer" class="image-viewer" aria-labelledby="viewer-title"><div class="viewer-header"><div><h2 id="viewer-title">我的报告</h2><p id="viewer-caption"></p></div><button id="viewer-close" type="button" aria-label="关闭图片预览">×</button></div><div id="viewer-pagination" class="viewer-pagination" hidden></div><div id="viewer-loading" role="status">正在加载图片…</div><img id="viewer-image" alt=""><canvas id="viewer-canvas" role="img" aria-label="使用当前姓名的战绩长图" hidden></canvas><div id="viewer-error" role="status" hidden>暂时无法加载图片，请关闭后重试。已经保存的作品不会受影响。</div><a id="viewer-download" class="button button-primary" href="#">下载原图 </a></dialog>
+  <dialog id="project-dialog" class="project-dialog" aria-labelledby="project-dialog-title"><div class="viewer-header"><div><p class="eyebrow">项目介绍 · 本地说明</p><h2 id="project-dialog-title">墨境</h2></div><button id="project-dialog-close" type="button" aria-label="关闭项目介绍">×</button></div><div id="project-dialog-body"></div><button id="project-dialog-done" class="button button-primary" type="button">了解了</button></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript><p class="noscript-note">请开启浏览器 JavaScript，以查看自己的作品、成绩与下载入口。</p></noscript>
+</body>
+</html>

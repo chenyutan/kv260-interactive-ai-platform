@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=墨境 · 国风体感工坊
+Comment=动作水墨、万物入墨、墨武格斗、彩墨切水果
+Exec=/usr/bin/python3 /home/ubuntu/ink-suite/launch.py --fullscreen
+Path=/home/ubuntu/ink-suite
+Terminal=false
+Icon=applications-games
+Categories=Game;Graphics;

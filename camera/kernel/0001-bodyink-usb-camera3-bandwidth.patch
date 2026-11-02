@@ -1,0 +1,64 @@
+--- a/drivers/media/usb/uvc/uvc_video.c
++++ b/drivers/media/usb/uvc/uvc_video.c
+@@ -129,6 +129,35 @@
+ 	return -EPIPE;
+ }
+ 
++
++/* Opt-in workaround for the observed USB Camera3 firmware (0bda:5858, 0.01).
++ * Read when negotiating a stream, permitting a closed-stream A/B comparison.
++ * Keep disabled until explicitly enabled for the affected camera.
++ */
++static bool bodyink_ss_bandwidth;
++module_param(bodyink_ss_bandwidth, bool, 0644);
++MODULE_PARM_DESC(bodyink_ss_bandwidth,
++		"Correct USB Camera3 1080p60 YUYV SuperSpeed bandwidth");
++
++static u32 bodyink_payload_floor(bool enabled, u16 vendor, u16 product,
++			       u16 revision, bool superspeed, u32 fourcc,
++			       u16 width, u16 height, u32 interval,
++			       u32 payload)
++{
++	/* This firmware advertises 30720 B/125us for 1080p60 YUYV,
++	 * below the 31104 B/125us pixel average, even before UVC headers.
++	 * Its alt 11 advertises 32768 B/125us. Keep all other modes and
++	 * larger requests unchanged; do not accept corrupt video frames.
++	 */
++	if (enabled && vendor == 0x0bda && product == 0x5858 &&
++	    revision == 0x0001 && superspeed &&
++	    fourcc == V4L2_PIX_FMT_YUYV && width == 1920 && height == 1080 &&
++	    interval >= 166666 && interval <= 166667 && payload == 30720)
++		return 32768;
++
++	return payload;
++}
++
+ static void uvc_fixup_video_ctrl(struct uvc_streaming *stream,
+ 	struct uvc_streaming_control *ctrl)
+ {
+@@ -231,6 +260,25 @@
+ 
+ 		ctrl->dwMaxPayloadTransferSize = bandwidth;
+ 	}
++
++	{
++		const struct usb_device_descriptor *d =
++			&stream->dev->udev->descriptor;
++		u32 payload = bodyink_payload_floor(bodyink_ss_bandwidth,
++			le16_to_cpu(d->idVendor), le16_to_cpu(d->idProduct),
++			le16_to_cpu(d->bcdDevice),
++			stream->dev->udev->speed == USB_SPEED_SUPER,
++			format->fcc, frame->wWidth, frame->wHeight,
++			ctrl->dwFrameInterval, ctrl->dwMaxPayloadTransferSize);
++
++		if (payload != ctrl->dwMaxPayloadTransferSize) {
++			dev_info(&stream->dev->udev->dev,
++				 "BodyInk: 1080p60 YUYV payload %u -> %u B/interval\n",
++				 ctrl->dwMaxPayloadTransferSize, payload);
++			ctrl->dwMaxPayloadTransferSize = payload;
++		}
++	}
++
+ }
+ 
+ static size_t uvc_video_ctrl_size(struct uvc_streaming *stream)

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "version": "1.7.4-ink1",
+  "engine": "/home/ubuntu/games/thextech/releases/1.7.4-ink1-f5420afdb9d0/bin/thextech",
+  "engine_sha256": "f5420afdb9d0d0857c8fa400c9b8336b912a6c94bc804ab988f51dd7dd6f758c",
+  "content": "/home/ubuntu/games/thextech/content/adventures-of-demo-1.7.4",
+  "user_root": "/home/ubuntu/games/thextech/users/default",
+  "graphics_library": "/usr/lib/aarch64-linux-gnu/mali/x11/libMali.so.9.0",
+  "source_archive_sha256": "5f51bfbf62285453a5d6dbbcbb44fe518f58a8e8fdb28c5e6f7326154dea7063",
+  "source_patch_sha256": "0a729bd5862ceff5ec093ed0a856adc98f454df153fe22816b26115292621393",
+  "original_content_archive_sha256": "304ae8eafa6485bc83b9298b23a6c81085d2a473e40c868c957d3e9df932ce1b"
+}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Wait for local desktop before BodyInk camera and inference
+[Timer]
+OnBootSec=30
+OnUnitInactiveSec=10
+Unit=bodyink-session-gate.service
+[Install]
+WantedBy=timers.target

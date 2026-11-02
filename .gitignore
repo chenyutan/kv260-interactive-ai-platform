@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+*.sqlite*
+*.log
+ink-suite/data/
+ink-suite/build/
+fpga/build/
+fpga/platform-source/
+fpga/package-work/
+fpga/packaged-ip/
+fpga/dpu-package/
+fpga/platform-restore/
+models/photo/qa-adain-v4/upstream/models/

@@ -1,0 +1,13 @@
+{
+  "source": "https://github.com/richgel999/rg-etc1",
+  "commit": "701f354e19f69f2b7f79cc5c6fdde870467f01bb",
+  "files": {
+    "rg_etc1.cpp": "9a6a117d18b9b590434e125f12438b997464a04ab6b3668a9001a8bfaf8bb2b0",
+    "rg_etc1.h": "7a16b89b9fcd1b2be74e770d18493db43bf47c590bbddad379aba4757bda0585"
+  },
+  "license": "Zlib",
+  "source_png_sha256": "a72379533a79620d9fc70f174da03dd0f9f12e27d197f6bb53f6bccce515a4b3",
+  "base_pkm_sha256": "991633b5cbe1bdcfc578704a3419bfca1d158ed8893adce04894f4044c4f1aad",
+  "format_reference": "https://registry.khronos.org/OpenGL/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt",
+  "note": "Encoding tools only. No runtime encoder, external artwork or new texture resource. Existing base atlas remains byte-identical."
+}

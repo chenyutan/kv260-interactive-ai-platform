@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen",
+  "created": "2026-09-26",
+  "assets": [
+    {
+      "file": "bamboo.png",
+      "prompt": "Use case: stylized-concept. Create an original fine-art Chinese ink-and-mineral-color painting background for a native interactive application. Wide landscape 16:9 composition. Bamboo garden in spring: expressive calligraphic ink bamboo and malachite green leaves frame the far left and right edges, softly layered pale bamboo in atmospheric middle distance, a few ochre scholar rocks near the lower corners, subtle rice-paper texture with luminous warm ivory empty space. Reserve a calm uncluttered central stage, center 35%-65% width and 30%-90% height, for a full-body standing character to be composited later; empty pale ground at lower middle, no foreground branches across this area. Museum-quality hand-painted Chinese xieyi brushwork, variation of wet/dry ink, beautiful sophisticated jade greens and warm light, intentional negative space. This should look like Chinese painting, not a photograph, digital blur filter, anime, vector or 3D art. No people, animals, lettering, calligraphy, seals, logos, frames, UI, borders or watermark. One complete painting, not a collage.",
+      "source": "project-generated artwork"
+    },
+    {
+      "file": "mountains.png",
+      "prompt": "Use case: stylized-concept. Original museum-quality Chinese shanshui ink-and-mineral-color painting, landscape 16:9 background for interactive full-body character. Majestic distant layered blue-green mountains on the upper left and upper right, azurite blue ridges and malachite green slopes, wisps of warm white paper mist, a tranquil winding river, a small distant pavilion near the far right hillside, scholar rocks and grasses at lower outside corners. Reserve central 35%-65% width from y=30%-90% as an open, luminous misty stage with pale warm-ivory flat riverbank ground for a standing character. Strong asymmetrical composed brushwork, rich but restrained green/blue mineral pigment over expressive black-ink texture, dry brush rock striations and soft wet-ink distance, rice-paper texture. Actual elegant Chinese ink painting feeling, not photographic, not watercolor European style, not anime/3D/vector, not heavy antique yellow. No people, no boats containing people, no text, seals, calligraphy, labels, logos, frame, border or UI. One complete painting.",
+      "source": "project-generated artwork"
+    },
+    {
+      "file": "plum.png",
+      "prompt": "Use case: stylized-concept. Original elegant Chinese ink-and-color painting background, wide landscape 16:9, for a full-body character interactive scene. Early-spring plum courtyard: a graceful dark twisting plum trunk at far left, sparse vermilion and rose blossoms on branches framing upper left and upper right, a hint of whitewashed Jiangnan courtyard wall and grey tiled roof in the far background, pale blue-grey mountain mist, a weathered scholar stone near far right and delicate moss in lower corners. Reserve a broad luminous uncluttered central stage at center 35%-65% width, 30%-90% height, warm-ivory empty stone courtyard ground for a full-body standing character. Sophisticated genuine Chinese xieyi painting, lively expressive black calligraphic branches, subtle mineral jade and ochre accents, blossom color in delicate washes, dry brush and wet ink variation, fine rice-paper texture, serene and poetic. Avoid brown antique filter, photorealism, anime, 3D, vector look. No people or animals, no text/calligraphy/seals, no labels, no frames/borders, no UI. One complete painting.",
+      "source": "project-generated artwork"
+    }
+  ]
+}

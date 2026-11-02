@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KV260 Vision Review</title>
+  <style>
+    :root { color-scheme: dark; --bg:#07110f; --card:#10211d; --line:#24433a; --mint:#65f0bd; --amber:#ffc66b; --red:#ff6d79; --text:#eaf7f2; --muted:#8fb2a7; }
+    * { box-sizing:border-box } body { margin:0; min-height:100vh; font:14px/1.55 Inter,Segoe UI,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 0,#14372c 0,transparent 35%),var(--bg); }
+    main { max-width:1500px; margin:auto; padding:28px; } header { display:flex; justify-content:space-between; gap:24px; align-items:end; margin-bottom:22px; }
+    h1 { margin:0; font-size:clamp(26px,4vw,48px); letter-spacing:-.04em } h1 span { color:var(--mint) } .sub { color:var(--muted); max-width:700px }
+    .badge { border:1px solid var(--line); border-radius:999px; padding:7px 12px; color:var(--muted) } .badge.pass{color:var(--mint)} .badge.fail{color:var(--red)}
+    .toolbar,.review,.metrics,.grid { display:grid; gap:14px } .toolbar { grid-template-columns:1fr auto; margin-bottom:14px } .review { grid-template-columns:1fr auto auto; margin-top:14px }
+    input,textarea,button { font:inherit; border-radius:10px; border:1px solid var(--line); background:#091815; color:var(--text); padding:10px 12px } button { cursor:pointer; font-weight:700 } button.primary{background:var(--mint);color:#062018;border-color:transparent} button.reject{color:var(--red)}
+    .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .card { background:color-mix(in srgb,var(--card) 92%,transparent); border:1px solid var(--line); border-radius:16px; padding:14px; min-width:0; }
+    .card h2 { margin:0 0 10px; font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:.12em } .frame { min-height:250px; display:grid; place-items:center; overflow:auto; background:#030706; border-radius:10px }
+    .frame img { max-width:100%; max-height:520px; image-rendering:auto } .compare { position:relative; display:inline-block; line-height:0 } .compare img{display:block}.compare .top{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}
+    .slider { width:100%; accent-color:var(--mint); margin-top:10px } .metrics { grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); margin-top:14px } .metric { padding:13px; border:1px solid var(--line); border-radius:12px; background:#0a1714 }
+    .metric b { display:block; font-size:20px; color:var(--mint) } .metric span { color:var(--muted) } pre { white-space:pre-wrap; overflow:auto; color:var(--muted) } .hidden{display:none!important}
+    @media(max-width:850px){.grid{grid-template-columns:1fr}.toolbar,.review{grid-template-columns:1fr}header{align-items:start;flex-direction:column}}
+  </style>
+</head>
+<body><main>
+  <header><div><h1>KV260 <span>Vision Review</span></h1><div class="sub">同一 session 同时服务人工确认与 Agent 定量门禁。上传板端输出后，自动计算误差、PSNR、SSIM、坏点比例与差分图。</div></div><div id="status" class="badge">等待数据</div></header>
+  <div class="toolbar"><input id="outputPath" placeholder="板端/本机输出图像的绝对路径"><button class="primary" onclick="evaluatePath()">读取并评估</button></div>
+  <div class="toolbar"><input id="upload" type="file" accept="image/*"><button onclick="uploadOutput()">上传输出图像</button></div>
+  <section class="grid">
+    <article class="card"><h2>输入帧</h2><div class="frame"><img id="input" src="/image/input"></div></article>
+    <article class="card" id="outputCard"><h2>输出帧</h2><div class="frame"><img id="output" src=""></div></article>
+    <article class="card" id="compareCard"><h2>黄金 / 输出滑动对比</h2><div class="frame"><div class="compare"><img id="golden" src=""><img id="compareOutput" class="top" src=""></div></div><input id="slider" class="slider" type="range" min="0" max="100" value="50"></article>
+    <article class="card" id="diffCard"><h2>差分热图（4×增益）</h2><div class="frame"><img id="diff" src=""></div></article>
+  </section>
+  <section id="metrics" class="metrics"></section>
+  <section class="card review"><textarea id="note" rows="2" placeholder="确认说明：视觉效果、边界问题、是否可继续综合/部署"></textarea><button class="primary" onclick="review('accept')">确认通过</button><button class="reject" onclick="review('reject')">驳回</button></section>
+  <details class="card" style="margin-top:14px"><summary>完整状态</summary><pre id="raw"></pre></details>
+</main><script>
+const $=id=>document.getElementById(id), bust=()=>'?t='+Date.now();
+function metric(k,v){return `<div class="metric"><b>${v}</b><span>${k}</span></div>`}
+function render(data){
+  $('raw').textContent=JSON.stringify(data,null,2); const ev=data.evaluation||{}; const m=ev.metrics||{};
+  $('status').textContent=ev.status||data.status||'ready'; $('status').className='badge '+(ev.status||'');
+  if(ev.output_png){$('output').src='/image/output'+bust();$('compareOutput').src='/image/output'+bust()}
+  if(data.paths&&data.paths.golden_png){$('golden').src='/image/golden'+bust();$('compareCard').classList.remove('hidden')}else{$('compareCard').classList.add('hidden')}
+  if(ev.diff_png){$('diff').src='/image/diff'+bust();$('diffCard').classList.remove('hidden')}else{$('diffCard').classList.add('hidden')}
+  const q=ev.quality||{}; let items=''; for(const [k,v] of Object.entries(m))if(!Array.isArray(v))items+=metric(k,v); for(const [k,v] of Object.entries(q))items+=metric(k,v); $('metrics').innerHTML=items;
+  if(data.review){$('note').value=data.review.note||''}
+}
+async function refresh(){const r=await fetch('/api/status',{cache:'no-store'});render(await r.json())}
+async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)alert(d.message||'请求失败');await refresh()}
+async function evaluatePath(){await post('/api/evaluate-path',{output_image:$('outputPath').value})}
+async function uploadOutput(){const f=$('upload').files[0];if(!f)return alert('请选择图像');const r=await fetch('/api/upload-output',{method:'POST',body:f});const d=await r.json();if(!r.ok)alert(d.message||'上传失败');await refresh()}
+async function review(decision){await post('/api/review',{decision,note:$('note').value})}
+$('slider').oninput=e=>$('compareOutput').style.clipPath=`inset(0 ${100-e.target.value}% 0 0)`; refresh();
+</script></body></html>

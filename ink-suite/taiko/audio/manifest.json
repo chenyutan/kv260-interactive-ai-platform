@@ -1,0 +1,17 @@
+{
+  "title": "青岚鼓引",
+  "composer": "InkSuite procedural original · 2026-09-27",
+  "duration_seconds": 72.0,
+  "bpm": 100,
+  "sample_rate": 22050,
+  "channels": 2,
+  "format": "PCM S16LE",
+  "sha256": "a23cb0b790b4f2d66cd79d5c3b18e830d7668530865592b5595653af21154622",
+  "provenance": "Original algorithmic composition and synthesis; no third-party music, recordings or samples.",
+  "license": "Project original; generated source and waveform may be used and modified with InkSuite.",
+  "peak_normalized": 0.88,
+  "chart_difficulties": [
+    "easy",
+    "normal"
+  ]
+}

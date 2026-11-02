@@ -1,0 +1,25 @@
+[Unit]
+Description=BodyInk body pose and ink painting
+Requires=bodyink-dpu.service
+Wants=bodyink-camera.service
+After=network.target bodyink-camera.service bodyink-dpu.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=ubuntu
+SupplementaryGroups=video render
+WorkingDirectory=/home/ubuntu/bodyink-live
+Environment=LD_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=OMP_NUM_THREADS=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/ubuntu/bodyink-live/app.py --target-fps 25 --preview-fps 3 --enabled-actions A01 A02 A03 A04 A06
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0022
+
+[Install]
+WantedBy=multi-user.target

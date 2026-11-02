@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "game": "taiko",
+  "created_date": "2026-09-27",
+  "tool": "image_gen.imagegen",
+  "generation_mode": "builtin",
+  "asset_path_base": "this manifest directory",
+  "assets": [
+    {
+      "mode": "RGB",
+      "size": [
+        1672,
+        941
+      ],
+      "bytes": 2275527,
+      "sha256": "68250d0956d039efde6607c09d0e239de531689f2a363c73de7b536776c55115",
+      "file": "landscape.png",
+      "tool": "image_gen.imagegen",
+      "generation_mode": "builtin",
+      "transparent_background": false,
+      "prompt": "Use case: stylized-concept. Asset type: final background bitmap for a native Chinese ink-painting rhythm game, widescreen 16:9, target 1920x1080. Create an exquisitely painted, colorful traditional Chinese shan-shui panorama for a war-drum stage. Distant layered blue-green and jade mountains, warm pale rice-paper atmosphere, elegant vermilion autumn maple at the far left and a restrained ancient pavilion at the far right. Refined mineral pigments, ink-wash edges, subtle gold sunlight, sophisticated spacious composition, not monochrome, not cartoon vector. Gameplay layout is crucial: the middle upper 65 percent must be calm bright mist and open sky with very few high-contrast marks, so two horizontal rhythm lanes will remain readable. Mountain and foliage detail concentrated toward the left and right borders and distant lower horizon. Bottom 20 percent is a low-detail warm stone/wood performance platform for two separate drum sprites. Do not draw any drums, people, UI, symbols, notes, letters, seals, signatures or watermark. No baked-in interface or frames. One beautiful cohesive Chinese painting; no photorealism, no 3D render, no anime characters.",
+      "generated_source": "project-generated artwork",
+      "qa": {
+        "source_copy_sha256_verified": true,
+        "manual_visual_review": true,
+        "review": "Visual QA: calm bright upper middle for rhythm lanes, side foliage/pavilion, lower stone stage. No baked-in drums, text or interface.",
+        "runtime_composite_review": "pending board Cairo screenshot",
+        "image_pixel_editing": "none; byte-for-byte copy of built-in generation"
+      }
+    },
+    {
+      "mode": "RGBA",
+      "size": [
+        1254,
+        1254
+      ],
+      "bytes": 2305547,
+      "sha256": "897b9f5e02b16d7d9af6579fb24c9c7391afb7332059049c9d0902278e77df95",
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "transparent_fraction": 0.34758438069946507,
+      "subpixel_fraction": 0.010166510229466663,
+      "visible_bbox": [
+        30,
+        98,
+        1223,
+        1150
+      ],
+      "edge_alpha_max": 1,
+      "file": "drum.png",
+      "tool": "image_gen.imagegen",
+      "generation_mode": "builtin",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept. Asset type: a single production-ready transparent PNG sprite for a native Chinese rhythm game. Create one magnificent traditional Chinese war drum, complete and isolated, centered on a genuinely transparent alpha background. Square composition, target 1024x1024, ample 8 percent clear margin around all edges. Front view seen slightly from above: a wide circular taut warm ivory hide drumhead tilted toward the viewer, thick cinnabar lacquered wooden barrel visible below, dark ink-black bands, tasteful antique brass studs and a few subtle hand-painted cloud motifs. Two small red silk tassels may hang close to the sides, contained in the silhouette. Painted with high quality colorful Chinese ink wash and fine gongbi detail, rich vermilion, deep umber, antique gold, warm rice-paper highlights. Clear readable silhouette when scaled to 200px. The entire drum and all details must fit inside frame. No sticks, no hands, no people, no stand, no pedestal, no ground-plane shadow, no scenery, no lettering, no seals, no watermark. Background must contain actual transparency, never a checkerboard or a solid rectangle. Original art, refined Chinese ink-painting aesthetic, not 3D or photorealistic.",
+      "generated_source": "project-generated artwork",
+      "qa": {
+        "source_copy_sha256_verified": true,
+        "manual_visual_review": true,
+        "review": "Visual QA: complete cinnabar drum, ivory head, brass studs and short red tassels; isolated silhouette. Actual alpha>=16 bounding box is fully inside canvas.",
+        "runtime_composite_review": "pending board Cairo screenshot",
+        "image_pixel_editing": "none; byte-for-byte copy of built-in generation",
+        "alpha_extrema_verified": true,
+        "no_visible_edge_clipping": true,
+        "alpha_preview_note": "Preview can show hidden RGB under alpha=0; use actual PNG alpha with OVER blending. No conversion to RGB for sprite caching."
+      }
+    }
+  ],
+  "qa_status": "source visual and numeric transparency checks passed; runtime composite pending",
+  "modification_policy": "Preserve generated source originals. No Python image editing, no external generation API."
+}

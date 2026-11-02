@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=墨武格斗
+Comment=单人国风体感格斗
+Exec=/usr/bin/python3 /home/ubuntu/ink-fight/native/launch_game.py
+Path=/home/ubuntu/ink-fight/native
+Icon=applications-games
+Terminal=false
+Categories=Game;
+StartupNotify=true

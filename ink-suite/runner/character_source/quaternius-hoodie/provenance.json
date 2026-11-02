@@ -1,0 +1,26 @@
+{
+  "author": "Quaternius",
+  "pack": "Ultimate Modular Men (license file calls it Ultimate Modular Males)",
+  "asset": "Casual_Hoodie.gltf",
+  "license": "CC0-1.0",
+  "official_pack_page": "https://quaternius.com/packs/ultimatemodularcharacters.html",
+  "official_author_announcement": "https://www.patreon.com/quaternius/posts/ultimate-modular-62873637",
+  "official_drive_file_id": "1em1So1xwwQNfHJYMvzKcXkZllvtxpKP5",
+  "retrieval_note": "Official Google Drive download returned quota exceeded. Retrieved the CC0 original from a public mirror with its pack license; no quota circumvention.",
+  "mirror": "https://github.com/agentkaerf/FreeModels",
+  "mirror_mesh_git_blob": "70878aec4464137c6c92ec99a74ef79578d29480",
+  "mirror_license_git_blob": "62341762fbd2f5eca68b8ab98d3ae1c4487087a1",
+  "source_sha256": "dd74886c26998a0fa888b4ce557a0932d7d97b0265dd4c763154d081b7a6cb98",
+  "license_sha256": "e8dbf915a2b82229913e301a0787696611241bdefec4832bc084f54161db1efe",
+  "adaptations": [
+    "Collapsed 62 source skin joints to existing 15 runtime nodes; up to 4 weights.",
+    "Adjusted head and body proportions, segment fit and smoothed cloth normals.",
+    "Recoloured authored hoodie, shorts/leg surfaces and shoes using vertex colours. Lower-leg recolour is a legging treatment, not new trouser geometry.",
+    "Retained original locally authored lantern and ribbon accessories, procedural movement and foot-height solver.",
+    "Baked relaxed finger curl through original finger joints, reduced hand size 16%, then collapsed to the existing forearm. Lantern moved 0.07 metres towards the hoodie; original 24-triangle shoulder straps added.",
+    "Corrected offline foot bind matrices: remove each source Foot bone local +Y horizontal yaw (L 58.795975 deg, R 6.628508 deg) before shoe scaling. Vertices, weights, topology, source mesh and runtime motion unchanged."
+  ],
+  "runtime": "Fixed C++ data only; no model loader, texture, shader or asset access added at runtime.",
+  "animations": "Source includes 24 clips. None are bundled into runtime motion; existing run/jump/slide/landing poses drive the retargeted mesh.",
+  "foot_correction_data_sha256": "5f1a58ccb5a764e162cd1abca0d8250f6efcb31ce6874fe1a0488b6d3337c69b"
+}

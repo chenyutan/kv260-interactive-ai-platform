@@ -1,0 +1,2 @@
+# Only the selected camera's capture node triggers a bounded recovery attempt.
+ACTION=="add", SUBSYSTEM=="video4linux", ATTR{index}=="0", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="5858", ATTRS{serial}=="__BODYINK_CAMERA_SERIAL__", TAG+="systemd", ENV{SYSTEMD_WANTS}+="bodyink-camera-recover.service"

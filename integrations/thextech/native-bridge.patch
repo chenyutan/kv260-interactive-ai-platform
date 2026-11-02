@@ -1,0 +1,1017 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -929,6 +929,7 @@
+     src/graphics/gfx_marquee.cpp
+     src/control/duplicate.cpp
+     src/control/controls.cpp
++    src/control/ink_host.cpp
+     src/core/xerror.cpp
+     src/script/msg_preprocessor.cpp
+     src/script/msg_macros.cpp
+--- a/src/control/controls.cpp
++++ b/src/control/controls.cpp
+@@ -19,6 +19,7 @@
+  */
+ 
+ #include <algorithm>
++#include "ink_host.h"
+ 
+ #include <AppPath/app_path.h>
+ #include <Utils/files.h>
+@@ -758,6 +759,10 @@
+ // allocate InputMethodTypes according to system configuration
+ void Init()
+ {
++    if(InkHost::enabled())
++        g_InputMethodTypes.push_back(InkHost::createInputType());
++    else
++    {
+ #ifdef INPUT_3DS_H
+     g_InputMethodTypes.push_back(new InputMethodType_3DS);
+ #endif
+@@ -780,6 +785,7 @@
+     g_InputMethodTypes.push_back(new InputMethodType_TouchScreen);
+ #endif
+ 
++    } // ordinary standalone hardware registration
+     InitStrings();
+ 
+     // not yet ready for prime time
+--- a/src/control/ink_host.h
++++ b/src/control/ink_host.h
+@@ -0,0 +1,22 @@
++// Private suite adapter for TheXTech. SPDX-License-Identifier: GPL-3.0-or-later
++#pragma once
++#include <cstdint>
++struct SDL_Window;
++namespace Controls { class InputMethodType; }
++namespace InkHost
++{
++bool enabled();
++Controls::InputMethodType* createInputType();
++void poll();
++bool paused();
++bool muted();
++bool quitting();
++bool updateWindow(SDL_Window* window);
++void publish(bool audio_paused);
++void didPresent();
++void didLogic();
++bool restartPending();
++void beginRestart();
++void levelSetupReady();
++void restartCompleted(bool success);
++}
+--- a/src/control/ink_host.cpp
++++ b/src/control/ink_host.cpp
+@@ -0,0 +1,282 @@
++// Private suite input/lifecycle adapter. SPDX-License-Identifier: GPL-3.0-or-later
++#include "ink_host.h"
++#include "ink_host_protocol.h"
++#include "../controls.h"
++#include "../globals.h"
++#include "../game_main.h"
++#include <new>
++#include <cmath>
++#include <SDL2/SDL.h>
++// Include X11 last: its legacy macros must not affect engine declarations.
++#include <SDL2/SDL_syswm.h>
++
++namespace InkHost
++{
++static Channel channel;
++static uint32_t input_updates = 0, logic_ticks = 0, render_frames = 0;
++static uint32_t actual_size = 0, window_id = 0, restarts_completed = 0;
++static bool input_bound = false;
++static bool restart_in_progress = false;
++static bool restart_waiting_for_frame = false;
++static uint64_t last_publish_ms = 0, last_telemetry_ms = 0;
++static uint64_t active_ms = 0, last_account_ms = 0;
++static uint32_t last_flags = ~0U, last_ack_seq = ~0U;
++
++static uint32_t phase()
++{
++    if(LoadingInProcess || !GameIsActive)
++        return 0;
++    if(GameOutro)
++        return 4;
++    if(GameMenu)
++        return 1;
++    return LevelSelect ? 2 : 3;
++}
++
++static uint32_t pathHash(const std::string& value)
++{
++    uint32_t hash = 2166136261U;
++    for(unsigned char c : value)
++        hash = (hash ^ c) * 16777619U;
++    return hash;
++}
++
++static uint32_t centi(double value)
++{
++    if(!std::isfinite(value))
++        return 0;
++    double scaled = std::round(value * 100.0);
++    scaled = scaled < double(INT32_MIN) ? double(INT32_MIN) : scaled;
++    scaled = scaled > double(INT32_MAX) ? double(INT32_MAX) : scaled;
++    return uint32_t(int32_t(scaled));
++}
++
++bool enabled()
++{
++    channel.init();
++    return channel.requested;
++}
++
++void poll()
++{
++    if(enabled())
++        channel.drain(phase() == 3 && int(GamePaused) == 0 && !TestLevel && !LevelEditor && !BattleMode &&
++                      !IsHubLevel && !IsEpisodeIntro && LevelMacro == LEVELMACRO_OFF &&
++                      !FullFileName.empty());
++}
++
++bool paused() { return enabled() && channel.isPaused(clockMs()); }
++bool muted() { return enabled() && channel.mute != 0; }
++bool quitting() { return enabled() && channel.quit; }
++bool restartPending() { return enabled() && channel.restart_pending && !restart_in_progress; }
++void beginRestart() { restart_in_progress = true; }
++void levelSetupReady()
++{
++    if(restart_in_progress)
++        restart_waiting_for_frame = true;
++}
++
++void restartCompleted(bool success)
++{
++    if(!restart_in_progress)
++        return;
++    channel.restart_pending = false;
++    restart_in_progress = false;
++    restart_waiting_for_frame = false;
++    channel.need_release = true;
++    if(success)
++    {
++        ++restarts_completed;
++        channel.error = Okay;
++    }
++    else
++        channel.error = ReloadFailed;
++}
++
++bool updateWindow(SDL_Window* window)
++{
++    if(!enabled() || !window)
++        return false;
++    const int desired_w = int(channel.desired_size & 0xffffU);
++    const int desired_h = int(channel.desired_size >> 16);
++    int width = 0, height = 0;
++    SDL_GetWindowSize(window, &width, &height);
++    const int previous_w = width, previous_h = height;
++    if(channel.desired_size && desired_w >= 320 && desired_w <= 3840 &&
++       desired_h >= 200 && desired_h <= 2160 &&
++       (desired_w != width || desired_h != height))
++    {
++        SDL_SetWindowSize(window, desired_w, desired_h);
++        SDL_GetWindowSize(window, &width, &height);
++    }
++    actual_size = uint32_t(width) | (uint32_t(height) << 16);
++    // The host has already reparented the exact XID before issuing Run.
++    if(channel.received && !channel.isPaused(clockMs()) &&
++       !(SDL_GetWindowFlags(window) & SDL_WINDOW_SHOWN))
++        SDL_ShowWindow(window);
++    if(!window_id)
++    {
++        SDL_SysWMinfo info = {};
++        SDL_VERSION(&info.version);
++        if(SDL_GetWindowWMInfo(window, &info))
++        {
++#if defined(SDL_VIDEO_DRIVER_X11)
++            if(info.subsystem == SDL_SYSWM_X11)
++                window_id = uint32_t(info.info.x11.window);
++#endif
++        }
++    }
++    return width != previous_w || height != previous_h;
++}
++
++void didPresent()
++{
++    if(enabled())
++    {
++        ++render_frames;
++        // File parsing is not a usable restart. Player/resource setup and the
++        // first native presentation must have completed. That first usable
++        // screen may be a start-event dialog requiring player confirmation.
++        if(restart_in_progress && restart_waiting_for_frame && input_bound && phase() == 3)
++            restartCompleted(true);
++    }
++}
++
++void didLogic()
++{
++    if(enabled())
++        ++logic_ticks;
++}
++
++void publish(bool audio_paused)
++{
++    if(!enabled())
++        return;
++    const uint64_t now = clockMs();
++    const bool stale = channel.stale(now);
++    const bool is_paused = channel.isPaused(now);
++    const bool ready = actual_size && window_id && input_bound && render_frames && phase();
++    const uint32_t flags = (ready ? 1U : 0U) | (is_paused ? 2U : 0U) |
++        (stale ? 4U : 0U) | (audio_paused ? 8U : 0U) |
++        (channel.restart_pending ? 16U : 0U) | (channel.peer_closed ? 32U : 0U) |
++        (int(GamePaused) != 0 ? 64U : 0U);
++    // Mute is not a simulation pause. Native dialogs are a simulation pause.
++    if(last_account_ms && ready && !is_paused && int(GamePaused) == 0)
++        active_ms += now - last_account_ms;
++    last_account_ms = now;
++    if(now - last_publish_ms >= 100 || channel.seq != last_ack_seq || flags != last_flags)
++    {
++        Packet p = {{Magic, Version, State, channel.session, channel.seq,
++            channel.operation, flags, actual_size, window_id, channel.held(),
++            input_updates, render_frames, phase(),
++            stale && channel.error == Okay ? uint32_t(Stale) : channel.error,
++            uint32_t(now), restarts_completed}};
++        if(channel.sendPacket(p))
++        {
++            last_publish_ms = now;
++            last_ack_seq = channel.seq;
++            last_flags = flags;
++        }
++    }
++    if(now - last_telemetry_ms >= 250)
++    {
++        const int32_t lives100 = int32_t(std::lround(double(Lives) * 100.0));
++        Packet p = {{Magic, Version, Telemetry, channel.session, channel.seq,
++            logic_ticks, render_frames, uint32_t(Score), uint32_t(Coins),
++            uint32_t(lives100), uint32_t(numStars), pathHash(FullFileName),
++            pathHash(FileNamePathWorld + FileNameFullWorld), uint32_t(active_ms),
++            phase(), uint32_t(LevelBeatCode)}};
++        if(channel.sendPacket(p))
++            last_telemetry_ms = now;
++        if(numPlayers > 0 && phase() == 3)
++        {
++            // Diagnostic coordinates prove that private input moved the actual
++            // native player, rather than merely echoing an observed key mask.
++            const auto& player = Player[1];
++            Packet diagnostic = {{Magic, Version, Event, channel.session, channel.seq,
++                1U, centi(player.Location.X), centi(player.Location.Y),
++                centi(player.Location.SpeedX), centi(player.Location.SpeedY),
++                uint32_t(player.Character), uint32_t(player.State), player.Dead ? 1U : 0U,
++                uint32_t(player.Section), pathHash(FullFileName), 0U}};
++            channel.sendPacket(diagnostic);
++        }
++    }
++}
++
++class HostProfile final : public Controls::InputMethodProfile
++{
++public:
++    HostProfile() { Name = "Suite P1"; }
++    bool PollPrimaryButton(Controls::ControlsClass, size_t) override { return false; }
++    bool PollSecondaryButton(Controls::ControlsClass, size_t) override { return false; }
++    bool DeletePrimaryButton(Controls::ControlsClass, size_t) override { return false; }
++    bool DeleteSecondaryButton(Controls::ControlsClass, size_t) override { return false; }
++    const char* NamePrimaryButton(Controls::ControlsClass, size_t) override { return "Suite"; }
++    const char* NameSecondaryButton(Controls::ControlsClass, size_t) override { return ""; }
++    void SaveConfig(IniProcessing*) override {}
++    void LoadConfig(IniProcessing*) override {}
++};
++
++class HostMethod final : public Controls::InputMethod
++{
++public:
++    ~HostMethod() override { input_bound = false; }
++    bool Update(int, Controls_t& controls, CursorControls_t&, EditorControls_t&,
++                Controls::HotkeysPressed_t&) override
++    {
++        const uint32_t held = channel.held();
++        for(size_t i = 0; i < Controls::PlayerControls::n_buttons; ++i)
++            Controls::PlayerControls::GetButton(controls, i) = (held & (1U << i)) != 0;
++        ++input_updates;
++        return true;
++    }
++    void Rumble(int, float) override {}
++};
++
++class HostType final : public Controls::InputMethodType
++{
++protected:
++    Controls::InputMethodProfile* AllocateProfile() noexcept override
++    { return new(std::nothrow) HostProfile; }
++public:
++    HostType() { Name = "InkSuitePrivate"; }
++    bool TestProfileType(Controls::InputMethodProfile* p) override
++    { return dynamic_cast<HostProfile*>(p) != nullptr; }
++    bool RumbleSupported() override { return false; }
++    void UpdateControlsPre() override {}
++    void UpdateControlsPost() override
++    {
++        const uint32_t held = channel.held();
++        SharedControls.MenuUp = (held & (1U << 0)) != 0;
++        SharedControls.MenuDown = (held & (1U << 1)) != 0;
++        SharedControls.MenuLeft = (held & (1U << 2)) != 0;
++        SharedControls.MenuRight = (held & (1U << 3)) != 0;
++        SharedControls.MenuDo = (held & (1U << 10)) != 0;
++        // Drop/add closes its ready player panel through MenuBack, unlike
++        // messages/menus which consume MenuDo. Give the host's Confirm its
++        // intended "continue" meaning only in that native UI. Never synthesize
++        // P1 Jump: the same world/game frame resumes after the panel closes.
++        SharedControls.MenuBack = (held & (1U << 11)) != 0 ||
++            (GamePaused == PauseCode::DropAdd && (held & (1U << 10)) != 0);
++        SharedControls.QuitCredits = (held & ((1U << 10) | (1U << 11))) != 0;
++    }
++    Controls::InputMethod* Poll(const std::vector<Controls::InputMethod*>& methods) noexcept override
++    {
++        for(const auto* method : methods)
++            if(method)
++                return nullptr; // One suite-owned P1, never a duplicate reader.
++        auto* method = new(std::nothrow) HostMethod;
++        if(!method)
++            return nullptr;
++        method->Name = "Suite P1";
++        method->Type = this;
++        input_bound = true;
++        return method;
++    }
++};
++
++Controls::InputMethodType* createInputType()
++{
++    return new HostType;
++}
++}
+--- a/src/control/ink_host_protocol.h
++++ b/src/control/ink_host_protocol.h
+@@ -0,0 +1,186 @@
++// Linux-only private packet transport. SPDX-License-Identifier: GPL-3.0-or-later
++#pragma once
++#include <array>
++#include <cerrno>
++#include <cstdint>
++#include <cstdio>
++#include <cstdlib>
++#include <cstring>
++#include <climits>
++#include <fcntl.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <time.h>
++#include <unistd.h>
++#include <endian.h>
++
++namespace InkHost
++{
++constexpr uint32_t Magic = 0x584b4e49U;
++constexpr uint32_t Version = 1;
++enum Kind : uint32_t { Request = 1, State = 2, Telemetry = 3, Event = 4 };
++enum Operation : uint32_t { Run = 0, Pause = 1, Quit = 2, Restart = 3 };
++enum Error : uint32_t { Okay = 0, Malformed = 1, Stale = 2, WrongPhase = 3, ReloadFailed = 4 };
++using Packet = std::array<uint32_t, 16>;
++static_assert(sizeof(Packet) == 64, "Private protocol packet must remain 64 bytes");
++
++inline uint64_t clockMs()
++{
++    timespec now;
++    clock_gettime(CLOCK_MONOTONIC, &now);
++    return uint64_t(now.tv_sec) * 1000 + uint64_t(now.tv_nsec) / 1000000;
++}
++
++// A complete SOCK_SEQPACKET message is the publication boundary. There is no
++// cross-language shared-memory race and the parent owns all physical input.
++class Channel
++{
++public:
++    int fd = -1;
++    bool initialized = false;
++    bool requested = false;
++    bool received = false;
++    bool peer_closed = false;
++    bool quit = false;
++    bool restart_pending = false;
++    bool need_release = true;
++    uint32_t session = 0, seq = 0, operation = Pause, held_mask = 0;
++    uint32_t desired_size = 0, mute = 0, error = Okay;
++    uint64_t started_ms = 0, last_rx_ms = 0;
++
++    void init()
++    {
++        if(initialized)
++            return;
++        initialized = true;
++        started_ms = last_rx_ms = clockMs();
++        const char* value = std::getenv("INK_XTECH_FD");
++        if(!value || !*value)
++            return;
++        requested = true;
++        char* end = nullptr;
++        errno = 0;
++        long candidate = std::strtol(value, &end, 10);
++        int type = 0;
++        socklen_t type_size = sizeof(type);
++        sockaddr_storage address = {};
++        socklen_t address_size = sizeof(address);
++        if(errno || !end || *end || candidate < 3 || candidate > INT_MAX ||
++           getsockopt(int(candidate), SOL_SOCKET, SO_TYPE, &type, &type_size) ||
++           type != SOCK_SEQPACKET ||
++           getsockname(int(candidate), reinterpret_cast<sockaddr*>(&address), &address_size) ||
++           address.ss_family != AF_UNIX)
++        {
++            std::fprintf(stderr, "INK_XTECH_FD: expected a private AF_UNIX SOCK_SEQPACKET descriptor\n");
++            std::exit(2);
++        }
++        fd = int(candidate);
++        if(fcntl(fd, F_SETFD, FD_CLOEXEC) ||
++           fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK))
++        {
++            std::fprintf(stderr, "INK_XTECH_FD: failed to configure private descriptor\n");
++            std::exit(2);
++        }
++    }
++
++    bool stale(uint64_t now) const
++    {
++        return peer_closed || !received || now - last_rx_ms > 2000;
++    }
++
++    bool isPaused(uint64_t now) const
++    {
++        return !quit && (operation == Pause || stale(now));
++    }
++
++    void drain(bool level_restart_allowed)
++    {
++        init();
++        if(fd < 0)
++            return;
++        bool previously_paused = isPaused(clockMs());
++        for(unsigned n = 0; n < 64; ++n)
++        {
++            // MSG_TRUNC reports oversize packets instead of accepting a valid
++            // prefix. The buffer is exactly one immutable protocol packet.
++            Packet p = {};
++            ssize_t count = recv(fd, p.data(), sizeof(p), MSG_DONTWAIT | MSG_TRUNC);
++            if(count < 0)
++            {
++                if(errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
++                    peer_closed = true;
++                break;
++            }
++            if(count == 0)
++            {
++                peer_closed = true;
++                break;
++            }
++            for(auto& word : p)
++                word = le32toh(word);
++            bool reserved = false;
++            for(unsigned i = 9; i < p.size(); ++i)
++                reserved |= p[i] != 0;
++            if(count != ssize_t(sizeof(p)) || p[0] != Magic || p[1] != Version ||
++               p[2] != Request || !p[3] || p[5] > Restart || (p[6] & ~0xfffU) ||
++               p[8] > 1 || reserved)
++            {
++                error = Malformed;
++                continue;
++            }
++            if(received && (p[3] != session || int32_t(p[4] - seq) <= 0))
++                continue;
++            uint32_t previous_operation = operation;
++            received = true;
++            session = p[3];
++            seq = p[4];
++            operation = p[5];
++            held_mask = p[6];
++            desired_size = p[7];
++            mute = p[8];
++            last_rx_ms = clockMs();
++            if(operation != Restart)
++                error = Okay;
++            if(operation == Quit)
++                quit = true;
++            if(operation == Restart && previous_operation != Restart)
++            {
++                if(level_restart_allowed)
++                {
++                    restart_pending = true;
++                    need_release = true;
++                    error = Okay;
++                }
++                else
++                    error = WrongPhase;
++            }
++        }
++        const bool now_paused = isPaused(clockMs());
++        if(now_paused || previously_paused != now_paused)
++            need_release = true;
++        if(!now_paused && held_mask == 0)
++            need_release = false;
++    }
++
++    uint32_t held()
++    {
++        if(!requested || isPaused(clockMs()) || quit || restart_pending || need_release)
++            return 0;
++        return held_mask & 0xfffU;
++    }
++
++    bool sendPacket(Packet p)
++    {
++        // A peer may close only its write half. Still attempt a final receipt
++        // to its read half; MSG_NOSIGNAL makes a fully closed peer harmless.
++        if(fd < 0 || !received)
++            return false;
++        for(auto& word : p)
++            word = htole32(word);
++        ssize_t count = send(fd, p.data(), sizeof(p), MSG_DONTWAIT | MSG_NOSIGNAL);
++        if(count < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
++            peer_closed = true;
++        return count == ssize_t(sizeof(p));
++    }
++};
++}
+--- a/src/core/sdl/events_sdl.cpp
++++ b/src/core/sdl/events_sdl.cpp
+@@ -20,10 +20,14 @@
+ 
+ #include <pge_inttypes.h>
+ #include <SDL2/SDL_stdinc.h>
++#include <SDL2/SDL_timer.h>
+ 
+ #include <Logger/logger.h>
+ 
+ #include "events_sdl.h"
++#include "window_sdl.h"
++#include "control/ink_host.h"
++#include "frame_timer.h"
+ #include "core/window.h"
+ #ifdef USE_RENDER_BLOCKING
+ #include "core/render.h"
+@@ -102,6 +106,39 @@
+         }
+ #endif
+     }
++    // Keep IPC and SDL responsive while freezing every simulation callback.
++    // Never recursively call doEvents from inside this gate.
++    if(InkHost::enabled())
++    {
++        bool was_paused = false;
++        for(;;)
++        {
++            InkHost::poll();
++            auto* window = dynamic_cast<WindowSDL*>(g_window);
++            if(window && InkHost::updateWindow(window->getWindow()))
++                eventResize(); // Apply renderer viewport before acknowledging size.
++            SoundHostPauseEngine(InkHost::paused() || InkHost::muted() || InkHost::quitting());
++            InkHost::publish(SoundHostAudioPaused());
++            if(InkHost::quitting())
++            {
++                SDL_memset(&m_event, 0, sizeof(m_event));
++                m_event.type = SDL_QUIT;
++                processEvent();
++                break;
++            }
++            if(!InkHost::paused() || !GameIsActive)
++                break;
++            was_paused = true;
++            while(SDL_PollEvent(&m_event))
++                processEvent();
++            SDL_Delay(10);
++        }
++        if(was_paused)
++        {
++            resetFrameTimer();
++            resetTimeBuffer();
++        }
++    }
+ }
+ 
+ void EventsSDL::waitEvents()
+@@ -111,7 +148,7 @@
+         return;
+ #endif
+ 
+-    if(SDL_WaitEventTimeout(&m_event, 1000))
++    if(SDL_WaitEventTimeout(&m_event, InkHost::enabled() ? 10 : 1000))
+         processEvent();
+     doEvents();
+ }
+--- a/src/core/sdl/sdl_core.cpp
++++ b/src/core/sdl/sdl_core.cpp
+@@ -22,6 +22,7 @@
+ #include <Logger/logger.h>
+ 
+ #include "sdl_core.h"
++#include "control/ink_host.h"
+ 
+ bool CoreSDL::init(const CmdLineSetup_t &setup)
+ {
+@@ -77,6 +78,10 @@
+     sdlInitFlags |= SDL_INIT_HAPTIC;
+ #endif
+ 
++    // The suite already owns the G7 Pro; do not open a second reader.
++    if(InkHost::enabled())
++        sdlInitFlags &= ~(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
++
+     // Initialize SDL
+     res = (SDL_Init(sdlInitFlags) >= 0);
+ 
+--- a/src/core/sdl/window_sdl.cpp
++++ b/src/core/sdl/window_sdl.cpp
+@@ -40,6 +40,7 @@
+ #include "../version.h"
+ #include "controls.h"
+ #include "control/keyboard.h"
++#include "control/ink_host.h"
+ 
+ 
+ #ifdef RENDER_FULLSCREEN_TYPES_SUPPORTED
+@@ -506,6 +507,19 @@
+ 
+     // SDL_GL_ResetAttributes();
+ 
++#if defined(__linux__) && defined(THEXTECH_BUILD_GL_ES_MODERN) && !defined(THEXTECH_BUILD_GL_DESKTOP_MODERN) && !defined(THEXTECH_BUILD_GL_DESKTOP_LEGACY)
++    if(windowInitFlags & SDL_WINDOW_OPENGL)
++    {
++        // SDL chooses the EGL surface/config during window creation, before
++        // RenderGL probes its context. The default desktop profile is invalid
++        // on ES2-only drivers. Start from a valid ES2 window; RenderGL still
++        // performs its normal ES3 -> ES2 context negotiation afterwards.
++        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
++        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
++        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
++    }
++#endif
++
+ #if defined(__SWITCH__) /* On Switch, expect the initial size 1920x1080 */
+     const int initWindowW = 1920;
+     const int initWindowH = 1080;
+@@ -547,6 +561,14 @@
+     std::string window_name = "TheXTech Engine - (TheXTech v" V_LATEST_STABLE ", #" V_BUILD_VER ")";
+     if(!g_gameInfo.title.empty())
+         window_name = g_gameInfo.titleWindow();
++
++    if(InkHost::enabled())
++    {
++        windowInitFlags &= ~(SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_SHOWN);
++        windowInitFlags |= SDL_WINDOW_HIDDEN | SDL_WINDOW_BORDERLESS;
++        SDL_SetHint("SDL_WINDOW_ACTIVATE_WHEN_SHOWN", "0");
++        m_fullscreen = false;
++    }
+ 
+     D_pLogDebug("SDL2: Extra WindowFlags: %u", windowInitFlags);
+ 
+@@ -706,7 +728,8 @@
+ 
+ void WindowSDL::show()
+ {
+-    SDL_ShowWindow(m_window);
++    if(!InkHost::enabled())
++        SDL_ShowWindow(m_window); // Private child waits for its post-embed Run packet.
+ 
+ #if defined(_WIN32)
+     /* Workaround: Don't enable text input when it's unnecessary! Otherwise the IME gets toggled when is not needed! */
+--- a/src/core/sdl/render_sdl.cpp
++++ b/src/core/sdl/render_sdl.cpp
+@@ -40,6 +40,7 @@
+ #include <Utils/maths.h>
+ 
+ #include "render_sdl.h"
++#include "control/ink_host.h"
+ #include "config.h"
+ 
+ #include "core/window.h"
+@@ -298,6 +299,7 @@
+         flushRenderQueue();
+ 
+         SDL_RenderPresent(m_gRenderer);
++        InkHost::didPresent();
+         return;
+     }
+ 
+@@ -326,6 +328,7 @@
+     flushRenderQueue();
+ 
+     SDL_RenderPresent(m_gRenderer);
++    InkHost::didPresent();
+ 
+     m_recent_draw_plane = 0;
+ }
+--- a/src/core/opengl/render_gl_frontend.cpp
++++ b/src/core/opengl/render_gl_frontend.cpp
+@@ -38,6 +38,7 @@
+ #include "sdl_proxy/sdl_assert.h"
+ 
+ #include "core/window.h"
++#include "control/ink_host.h"
+ #include "core/render.h"
+ 
+ #include "main/cheat_code.h"
+@@ -516,6 +517,7 @@
+     m_render_planes.reset();
+ 
+     SDL_GL_SwapWindow(m_window);
++    InkHost::didPresent();
+ 
+     m_current_frame++;
+     if(m_current_frame % 512 == 0)
+--- a/src/frame_timer.cpp
++++ b/src/frame_timer.cpp
+@@ -27,6 +27,7 @@
+ #include "pge_delay.h"
+ 
+ #include "frame_timer.h"
++#include "control/ink_host.h"
+ #include "globals.h"
+ #include "config.h"
+ #include "graphics.h"
+@@ -636,6 +637,8 @@
+             preTimerExtraPre();
+ 
+         XEvents::doEvents();
++        if(InkHost::restartPending())
++            break;
+         s_currentTicks = SDL_GetTicks();
+ 
+         if(preTimerExtraPost)
+@@ -651,6 +654,7 @@
+ 
+             if(doLoopCallbackPost)
+                 doLoopCallbackPost(); // Run the loop callback
++            InkHost::didLogic();
+             XEvents::doEvents();
+ 
+             COMPUTE_FRAME_TIME_2_REAL();
+--- a/src/game_main.cpp
++++ b/src/game_main.cpp
+@@ -52,6 +52,7 @@
+ 
+ #include "globals.h"
+ #include "game_main.h"
++#include "control/ink_host.h"
+ #include "gfx.h"
+ 
+ #include "config.h"
+@@ -1473,6 +1474,7 @@
+ 
+             if(startError) // Quit the level because of error
+             {
++                InkHost::restartCompleted(false);
+                 // Mark all players as dead
+                 for(int A = 1; A <= numPlayers; A++)
+                     Player[A].Dead = true;
+@@ -1510,6 +1512,10 @@
+                 if(g_config.EnableInterLevelFade)
+                     g_levelScreenFader.setupFader(2, 65, 0, ScreenFader::S_FADE);
+ 
++                // A start-event may synchronously ask for player input. Mark
++                // resource/player setup before scripts so its first presented
++                // native dialog also counts as a usable restarted screen.
++                InkHost::levelSetupReady();
+                 lunaLoad();
+ 
+                 delayedMusicStart(); // Allow music being started
+@@ -1533,6 +1539,43 @@
+                     }
+                     return false;
+                 });
++
++                // A suite restart is a real current-level reload at the same
++                // boundary as the normal level loop, not a testing beat code.
++                // It never commits completion or edits the episode save file.
++                if(InkHost::restartPending())
++                {
++                    InkHost::beginRestart();
++                    const std::string reload_path = FullFileName;
++                    Record::EndRecording();
++                    StopMusic();
++                    StopAllSounds();
++                    UnloadExtSounds();
++                    lunaReset();
++                    ResetSoundFX();
++                    ClearLevel();
++                    Checkpoint.clear();
++                    CheckpointsList.clear();
++                    g_curLevelMedals.reset_checkpoint();
++                    // Reuse the original legal entry warp. Some sublevels do
++                    // not have a default player point and require this entry.
++                    StartWarp = lastWarpEntered;
++                    ReturnWarp = 0;
++                    EndLevel = false;
++                    LevelBeatCode = BEATCODE_NONE;
++                    const bool reopened = OpenLevel(reload_path);
++                    LevelSelect = !reopened;
++                    GameMenu = false;
++                    LevelRestartRequested = reopened;
++                    if(!reopened)
++                        InkHost::restartCompleted(false);
++                    clearScreenFaders();
++                    resetFrameTimer();
++                    resetTimeBuffer();
++                    if(!reopened)
++                        ReportLoadFailure(reload_path);
++                    continue;
++                }
+ 
+                 // Ensure everything is clear
+                 GraphicsClearScreen();
+--- a/src/sound.cpp
++++ b/src/sound.cpp
+@@ -113,6 +113,7 @@
+ 
+ static Mix_Music *g_curMusic = nullptr;
+ bool g_mixerLoaded = false;
++static int s_lastHostAudioRequest = -1;
+ 
+ //! most recent argument to StartMusic. Could be a world map music ID or a section index.
+ static constexpr int s_null_music = -5;
+@@ -423,6 +424,7 @@
+         StartSfxThread();
+ 
+         g_mixerLoaded = true;
++        s_lastHostAudioRequest = -1;
+     }
+ #endif // #ifndef THEXTECH_NO_SDL_BUILD
+ }
+@@ -473,6 +475,7 @@
+     Mix_Quit();
+ 
+     g_mixerLoaded = false;
++    s_lastHostAudioRequest = -1;
+ }
+ 
+ static void AddMusic(SoundScope root,
+@@ -698,8 +701,30 @@
+     }
+ }
+ 
++static bool s_nativeAudioPause = false;
++static bool s_hostAudioPause = false;
++
++bool SoundHostAudioPaused()
++{
++    return s_nativeAudioPause || s_hostAudioPause;
++}
++
++void SoundHostPauseEngine(int paused)
++{
++    s_hostAudioPause = (paused != 0);
++    // The event pump runs much faster than the game. Avoid repeatedly taking
++    // the audio backend lock for an unchanged host request. Native requests
++    // below always apply the combined state themselves; a new mixer resets it.
++    if(g_mixerLoaded && s_lastHostAudioRequest != int(s_hostAudioPause))
++    {
++        Mix_PauseAudio(SoundHostAudioPaused() ? 1 : 0);
++        s_lastHostAudioRequest = int(s_hostAudioPause);
++    }
++}
++
+ void SoundPauseAll()
+ {
++    s_nativeAudioPause = true;
+     if(!g_mixerLoaded)
+         return;
+ 
+@@ -709,19 +734,21 @@
+ 
+ void SoundResumeAll()
+ {
++    s_nativeAudioPause = false;
+     if(!g_mixerLoaded)
+         return;
+ 
+     pLogDebug("Resume all sound");
+-    Mix_PauseAudio(0);
++    Mix_PauseAudio(SoundHostAudioPaused() ? 1 : 0);
+ }
+ 
+ void SoundPauseEngine(int paused)
+ {
++    s_nativeAudioPause = (paused != 0);
+     if(!g_mixerLoaded)
+         return;
+ 
+-    Mix_PauseAudio(paused);
++    Mix_PauseAudio(SoundHostAudioPaused() ? 1 : 0);
+ }
+ 
+ static void processPathArgs(std::string &path,
+--- a/src/sound.h
++++ b/src/sound.h
+@@ -181,6 +181,9 @@
+ // Public Sub SoundResumeAll()
+ void SoundResumeAll();
+ void SoundPauseEngine(int paused);
++// External suite pause is independent from native UI/focus pause.
++void SoundHostPauseEngine(int paused);
++bool SoundHostAudioPaused();
+ // Public Sub PlayMusic(Alias As String)
+ void PlayMusic(const std::string &Alias, int fadeInMs = 0);
+ // Public Sub PlaySfx(Alias As String)
+--- a/src/core/opengl/gl_inc.h
++++ b/src/core/opengl/gl_inc.h
+@@ -66,7 +66,14 @@
+ #ifdef THEXTECH_BUILD_GL_ES_MODERN
+ #    include <SDL2/SDL_opengles2.h>
+ 
+-#    if defined(__ANDROID__) || defined(__VITA__)
++// Linux ES2-only drivers (such as Mali-400) must not link ES3 entry points.
++// Resolve optional ES3 functions through SDL for the active context instead.
++// Keep mixed desktop-GL builds on their existing symbol/header path.
++#    if defined(__linux__) && !defined(__ANDROID__) && !defined(THEXTECH_BUILD_GL_DESKTOP_MODERN) && !defined(THEXTECH_BUILD_GL_DESKTOP_LEGACY)
++#        define RENDERGL_LOAD_ES3_WITH_SDL
++#    endif
++
++#    if defined(__ANDROID__) || defined(__VITA__) || defined(RENDERGL_LOAD_ES3_WITH_SDL)
+ 
+ #        define GL_UNIFORM_BUFFER       0x8A11
+ #        define GL_DRAW_FRAMEBUFFER     0x8CA9
+--- a/src/core/opengl/render_gl_init.cpp
++++ b/src/core/opengl/render_gl_init.cpp
+@@ -41,14 +41,20 @@
+ 
+ #ifdef RENDERGL_LOAD_ES3_SYMBOLS
+ 
++#ifndef RENDERGL_LOAD_ES3_WITH_SDL
+ #include <EGL/egl.h>
++#endif
+ 
+ GL_APICALL void (* GL_APIENTRY glBindBufferBase) (GLenum target, GLuint index, GLuint buffer);
+ GL_APICALL void (* GL_APIENTRY glBlitFramebuffer) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+ 
+ void load_gles3_symbols()
+ {
++#ifdef RENDERGL_LOAD_ES3_WITH_SDL
++    #define FIND_PROC(s) s = reinterpret_cast<decltype(s)>(SDL_GL_GetProcAddress(#s))
++#else
+     #define FIND_PROC(s) s = reinterpret_cast<decltype(s)>(eglGetProcAddress(#s))
++#endif
+ 
+     FIND_PROC(glBindBufferBase);
+     FIND_PROC(glBlitFramebuffer);
+@@ -372,6 +378,10 @@
+     }
+ 
+ #ifdef RENDERGL_LOAD_ES3_SYMBOLS
++    // A renderer may be recreated on a different context. Never retain a
++    // previous ES3 context's pointers when the current context is only ES2.
++    glBindBufferBase = nullptr;
++    glBlitFramebuffer = nullptr;
+     if(m_gl_profile == SDL_GL_CONTEXT_PROFILE_ES && m_gl_majver >= 3)
+         load_gles3_symbols();
+ #endif
+@@ -441,13 +451,23 @@
+     if(!logic_contents.empty())
+         logic_contents.push_back('\0');
+ 
+-    // assess es3 compatibility using the bitmask shader
+-    m_bitmask_program = GLProgramObject(
+-        s_es3_advanced_vert_src,
+-        s_es3_bitmask_frag_src
+-    );
+-
+-    if(m_bitmask_program.inited())
++    // Assess ES3 compatibility only when its optional entry points exist.
++    // The ES2 shader/renderbuffer path remains available without them.
++    bool es3_functions_available = true;
++#ifdef RENDERGL_LOAD_ES3_SYMBOLS
++    es3_functions_available = m_gl_profile != SDL_GL_CONTEXT_PROFILE_ES ||
++        (m_gl_majver >= 3 && glBindBufferBase && glBlitFramebuffer);
++#endif
++    m_has_es3_shaders = false;
++    if(es3_functions_available)
++    {
++        m_bitmask_program = GLProgramObject(
++            s_es3_advanced_vert_src,
++            s_es3_bitmask_frag_src
++        );
++    }
++
++    if(es3_functions_available && m_bitmask_program.inited())
+         m_has_es3_shaders = true;
+     else
+     {
+@@ -558,9 +578,13 @@
+     // (0) cleanup existing framebuffer
+     destroyFramebuffer(buffer);
+ 
+-    if((m_gl_majver < 3 || !m_game_depth_texture) && buffer == BUFFER_DEPTH_READ)
+-    {
+-        pLogInfo("Render GL: cannot create depth read buffer on OpenGL < 3.0 / OpenGL ES < 3.0");
++    bool depth_read_supported = m_gl_majver >= 3 && m_game_depth_texture;
++#ifdef RENDERGL_LOAD_ES3_SYMBOLS
++    depth_read_supported = depth_read_supported && glBlitFramebuffer;
++#endif
++    if(!depth_read_supported && buffer == BUFFER_DEPTH_READ)
++    {
++        pLogInfo("Render GL: cannot create depth read buffer without OpenGL / OpenGL ES 3.0 depth-copy support");
+         return;
+     }
+ 

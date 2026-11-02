@@ -1,0 +1,10 @@
+[Unit]
+Description=Resume BodyInk capture when its USB camera appears
+# No periodic retry: only this exact camera's device-add event starts us.
+# The camera owner retains its own five-attempt restart limit.
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /home/ubuntu/bodyink-live/recover_camera.sh
+TimeoutStartSec=15

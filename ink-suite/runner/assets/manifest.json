@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "name": "runner-material-atlas-v1",
+  "generator": "built-in imagegen",
+  "original_art": true,
+  "commercial_game_assets_used": false,
+  "source_sha256": "6717769af20309a4ad296e8240c95e6c15053f332ac1dd0b6844d688e2b062c0",
+  "source_size": [
+    1254,
+    1254
+  ],
+  "prompt_sha256": "947c1db4add8791284b4cfe5beae9168179e9205fafebd16f9ae0dea8bed2c52",
+  "atlas": "material_atlas.png",
+  "sha256": "a72379533a79620d9fc70f174da03dd0f9f12e27d197f6bb53f6bccce515a4b3",
+  "width": 1024,
+  "height": 1024,
+  "format": "RGBA8",
+  "opaque": true,
+  "grid": [
+    4,
+    4
+  ],
+  "tile_texels": 256,
+  "uv_origin": "PNG top-left",
+  "filter": "linear clamp",
+  "tile_inset_texels": 4,
+  "tiles": {
+    "white": {
+      "index": 0,
+      "column": 0,
+      "row": 0
+    },
+    "plaster": {
+      "index": 1,
+      "column": 1,
+      "row": 0
+    },
+    "timber": {
+      "index": 2,
+      "column": 2,
+      "row": 0
+    },
+    "ceramic_tiles": {
+      "index": 3,
+      "column": 3,
+      "row": 0
+    },
+    "roof_bands": {
+      "index": 4,
+      "column": 0,
+      "row": 1
+    },
+    "paving": {
+      "index": 5,
+      "column": 1,
+      "row": 1
+    },
+    "cloth": {
+      "index": 6,
+      "column": 2,
+      "row": 1
+    },
+    "painted_metal": {
+      "index": 7,
+      "column": 3,
+      "row": 1
+    },
+    "glass": {
+      "index": 8,
+      "column": 0,
+      "row": 2
+    },
+    "jade": {
+      "index": 9,
+      "column": 1,
+      "row": 2
+    },
+    "stone": {
+      "index": 10,
+      "column": 2,
+      "row": 2
+    },
+    "lantern_paper": {
+      "index": 11,
+      "column": 3,
+      "row": 2
+    },
+    "lattice": {
+      "index": 12,
+      "column": 0,
+      "row": 3
+    },
+    "cloud_weave": {
+      "index": 13,
+      "column": 1,
+      "row": 3
+    },
+    "foliage": {
+      "index": 14,
+      "column": 2,
+      "row": 3
+    },
+    "water": {
+      "index": 15,
+      "column": 3,
+      "row": 3
+    }
+  },
+  "import_operations": [
+    "decode original",
+    "RGBA8 opaque conversion",
+    "Lanczos import to1024 power-of-two",
+    "reserve exact white16x16 GPU default sentinel in already white tile0"
+  ],
+  "loading": "one decode per renderer, one GPU upload per context, no per-frame uploads",
+  "etc1": {
+    "file": "material_atlas.pkm",
+    "sha256": "991633b5cbe1bdcfc578704a3419bfca1d158ed8893adce04894f4044c4f1aad",
+    "source_sha256": "a72379533a79620d9fc70f174da03dd0f9f12e27d197f6bb53f6bccce515a4b3",
+    "format": "ETC1_RGB8",
+    "width": 1024,
+    "height": 1024,
+    "bytes": 524304,
+    "pkm_version": "1.0",
+    "container": "pkm10",
+    "codec": "ETC1_RGB8_OES",
+    "opaque": true,
+    "uv_origin": "PNG top-left",
+    "white_sentinel_texels": 16,
+    "levels": 1,
+    "encoder": {
+      "name": "rg-etc1",
+      "commit": "701f354e19f69f2b7f79cc5c6fdde870467f01bb",
+      "license": "Zlib",
+      "quality": "high",
+      "offline": true
+    }
+  }
+}

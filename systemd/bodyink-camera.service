@@ -1,0 +1,29 @@
+[Unit]
+Description=BodyInk 1080p60 YUYV camera capture owner
+Requires=bodyink-uvc-bandwidth.service
+After=bodyink-uvc-bandwidth.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ubuntu
+Group=video
+RuntimeDirectory=bodyink-camera
+RuntimeDirectoryMode=0770
+RuntimeDirectoryPreserve=yes
+UMask=0007
+EnvironmentFile=-/etc/default/bodyink-camera
+ExecStart=/usr/local/bin/bodyink-camera $BODYINK_CAMERA_ARGS
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=64 78
+TimeoutStopSec=8
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/run/bodyink-camera
+
+[Install]
+WantedBy=multi-user.target

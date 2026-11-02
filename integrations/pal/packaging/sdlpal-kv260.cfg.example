@@ -1,0 +1,12 @@
+# Copy as sdlpal.cfg in the imported game-data directory, not the original assets.
+# This trimmed pal-navy fork has no surround wrapper. Use one OPL2 chip and let
+# CConvertopl duplicate the mono stream to both output channels.
+# Native x86_64 and ARM64 QEMU decoded PCM hashes match with these settings.
+Stereo=1
+UseSurroundOPL=0
+Music=RIX
+OPLCore=DBINT
+OPLChip=OPL2
+SampleRate=44100
+AudioBufferSize=1024
+# Actual KV260/Cube latency, routing and audible quality still need board testing.
