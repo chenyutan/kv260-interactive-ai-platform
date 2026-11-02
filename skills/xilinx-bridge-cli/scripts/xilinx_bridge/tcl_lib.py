@@ -69,9 +69,14 @@ proc wb_info {tag msg} { wb_emit "WB_INFO|$tag|$msg" }
 
 
 HW_COMMON = COMMON + r"""
-proc wb_open_hw_target {target_index} {
+proc wb_open_hw_target {target_index {target_name ""}} {
     set targets [get_hw_targets]
     if {[llength $targets] == 0} { error "no_hw_target" }
+    if {$target_name ne ""} {
+        set matches [lsearch -all -exact $targets $target_name]
+        if {[llength $matches] != 1} { error "expected_exactly_one_target name=$target_name" }
+        set target_index [lindex $matches 0]
+    }
     if {$target_index < 0 || $target_index >= [llength $targets]} {
         error "target_index_out_of_range index=$target_index count=[llength $targets]"
     }
@@ -81,9 +86,17 @@ proc wb_open_hw_target {target_index} {
     return $target
 }
 
-proc wb_select_programmable_device {device_index} {
+proc wb_select_programmable_device {device_index {device_name ""} {expected_part ""}} {
     set devs [get_hw_devices]
     if {[llength $devs] == 0} { error "no_hw_device" }
+    if {$device_name ne ""} {
+        set matches {}
+        foreach dev $devs {
+            if {[get_property NAME $dev] eq $device_name} { lappend matches $dev }
+        }
+        if {[llength $matches] != 1} { error "expected_exactly_one_device name=$device_name" }
+        set device_index [lsearch -exact $devs [lindex $matches 0]]
+    }
     if {$device_index == -1} {
         set candidates {}
         foreach dev $devs {
@@ -111,7 +124,11 @@ proc wb_select_programmable_device {device_index} {
             error "device_not_programmable index=$device_index name=[get_property NAME $dev] part=[get_property PART $dev]"
         }
     }
-    puts "WB_DEVICE_SELECTED|index=$selected_index|name=[get_property NAME $dev]|part=[get_property PART $dev]"
+    set actual_part [get_property PART $dev]
+    if {$expected_part ne "" && ![string equal -nocase $actual_part $expected_part]} {
+        error "device_part_mismatch expected=$expected_part actual=$actual_part"
+    }
+    puts "WB_DEVICE_SELECTED|index=$selected_index|name=[get_property NAME $dev]|part=$actual_part"
     return $dev
 }
 
@@ -383,8 +400,8 @@ exit 0
 PROGRAM_FPGA = HW_COMMON + r"""
 open_hw_manager
 if {[catch {connect_hw_server -url @SERVER@} msg]} { wb_err "connect_hw_server: $msg"; exit 1 }
-if {[catch {wb_open_hw_target @TIDX@} msg]} { wb_err $msg; exit 1 }
-if {[catch {set dev [wb_select_programmable_device @DIDX@]} msg]} { wb_err $msg; exit 1 }
+if {[catch {wb_open_hw_target @TIDX@ @TARGET_NAME@} msg]} { wb_err $msg; exit 1 }
+if {[catch {set dev [wb_select_programmable_device @DIDX@ @DEVICE_NAME@ @DEVICE_PART@]} msg]} { wb_err $msg; exit 1 }
 current_hw_device $dev
 set_property PROGRAM.FILE @BIT@ $dev
 wb_warn_k26_os_lifecycle $dev
@@ -414,8 +431,8 @@ exit 0
 ILA_CAPTURE = HW_COMMON + r"""
 open_hw_manager
 if {[catch {connect_hw_server -url @SERVER@} msg]} { wb_err "connect_hw_server: $msg"; exit 1 }
-if {[catch {wb_open_hw_target @TIDX@} msg]} { wb_err $msg; exit 1 }
-if {[catch {set dev [wb_select_programmable_device @DIDX@]} msg]} { wb_err $msg; exit 1 }
+if {[catch {wb_open_hw_target @TIDX@ @TARGET_NAME@} msg]} { wb_err $msg; exit 1 }
+if {[catch {set dev [wb_select_programmable_device @DIDX@ @DEVICE_NAME@ @DEVICE_PART@]} msg]} { wb_err $msg; exit 1 }
 current_hw_device $dev
 if {@BIT@ ne ""} {
     wb_warn_k26_os_lifecycle $dev
@@ -482,8 +499,8 @@ exit 0
 PROGRAM_FLASH = HW_COMMON + r"""
 open_hw_manager
 if {[catch {connect_hw_server -url @SERVER@} msg]} { wb_err "connect_hw_server: $msg"; exit 1 }
-if {[catch {wb_open_hw_target @TIDX@} msg]} { wb_err $msg; exit 1 }
-if {[catch {set dev [wb_select_programmable_device @DIDX@]} msg]} { wb_err $msg; exit 1 }
+if {[catch {wb_open_hw_target @TIDX@ @TARGET_NAME@} msg]} { wb_err $msg; exit 1 }
+if {[catch {set dev [wb_select_programmable_device @DIDX@ @DEVICE_NAME@ @DEVICE_PART@]} msg]} { wb_err $msg; exit 1 }
 current_hw_device $dev
 set parts [get_cfgmem_parts @FLASH_PART@]
 if {[llength $parts] == 0} {

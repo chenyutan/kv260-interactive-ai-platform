@@ -14,7 +14,7 @@ Python 3.10+ 的标准库即可列工具、检查静态工程、调用已安装�
 
 | 工作 | 入口与检查点 |
 |---|---|
-| 查看 19 个原生命令 | `python BRIDGE --help`，再用 `python BRIDGE 命令 --help` 查看参数。 |
+| 查看原生命令 | `python BRIDGE --help`，再用 `python BRIDGE 命令 --help` 查看参数。跨板卡入口与配置字段见[板卡配置](boards.md)。 |
 | 查询 36 个结构化工具 | `python BRIDGE tools`；例如 `python BRIDGE describe vitis_build`。 |
 | 新工程 | `call vivado_create_project --file create.json` 可融合建工程、加源和自检仿真。 |
 | 审查时序与资源 | 对已完成的实现运行 `vivado_report`。按实际报告检查指标及未约束项。 |

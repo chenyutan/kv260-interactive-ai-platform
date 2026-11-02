@@ -1,0 +1,11 @@
+{
+  "directory": ".",
+  "name": "threshold_demo",
+  "items": [
+    {"path": "pixel_threshold.v", "fileset": "sources_1", "top": "pixel_threshold"},
+    {"path": "tb_pixel_threshold.v", "fileset": "sim_1", "top": "tb_pixel_threshold"}
+  ],
+  "simulate_after_create": true,
+  "tb_top": "tb_pixel_threshold",
+  "runtime": "all"
+}

@@ -45,7 +45,7 @@ def _print(obj) -> None:
         raise SystemExit(1)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, board_profile=None) -> int:
     _configure_utf8_output()
     ap = argparse.ArgumentParser(prog="xilinx-bridge", description="Xilinx Agent Bridge CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -63,7 +63,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--reset", action="store_true", help="清除持久化覆盖并恢复自动探测")
 
     p = sub.add_parser("create", help="创建工程")
-    p.add_argument("directory"); p.add_argument("name"); p.add_argument("part")
+    p.add_argument("directory"); p.add_argument("name"); p.add_argument("part", nargs="?")
+
+    sub.add_parser("board-inspect", help="读取 --board-profile 指定的 Linux 板卡内核、架构和型号")
 
     p = sub.add_parser("sim", help="仿真")
     p.add_argument("xpr"); p.add_argument("--tb", default="")
@@ -173,6 +175,26 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     try:
+        profile_tools = {"devices": "hw_list_devices", "program": "hw_program_fpga",
+                         "ila": "hw_ila_capture", "flash": "hw_program_flash"}
+        hw_args = {}
+        if board_profile:
+            if args.cmd in profile_tools:
+                hw_args = board_profile.parameters(profile_tools[args.cmd], {})
+            elif args.cmd == "create":
+                supplied = {"part": args.part} if args.part else {}
+                args.part = board_profile.parameters("vivado_create_project", supplied)["part"]
+            elif args.cmd in ("sim", "build", "elaborate"):
+                args.xpr = board_profile.project(args.xpr)
+            elif args.cmd != "board-inspect":
+                raise ValueError(f"Use {args.cmd} without --board-profile, or use a supported profiled call")
+        if args.cmd == "board-inspect":
+            if not board_profile:
+                raise ValueError("Pass --board-profile FILE before board-inspect")
+            _print(board_profile.inspect_linux())
+            return 0
+        if args.cmd == "create" and not args.part:
+            raise ValueError("Specify the Vivado part or pass --board-profile FILE before create")
         if args.cmd == "detect":
             _print(core.detect_tools(detail=args.detail))
         elif args.cmd == "serve":
@@ -192,15 +214,15 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "build":
             _print(core.build_all(args.xpr, wait=args.wait))
         elif args.cmd == "devices":
-            _print(core.hw_list())
+            _print(core.hw_list(**hw_args))
         elif args.cmd == "program":
-            _print(core.program_fpga(args.bit, args.ltx))
+            _print(core.program_fpga(args.bit, args.ltx, **hw_args))
         elif args.cmd == "ila":
-            _print(core.ila_capture(args.ltx, args.bit, args.depth))
+            _print(core.ila_capture(args.ltx, args.bit, args.depth, **hw_args))
         elif args.cmd == "mcs":
             _print(core.generate_mcs(args.bit, args.out, args.size, args.interface))
         elif args.cmd == "flash":
-            _print(core.program_flash(args.mcs, args.part))
+            _print(core.program_flash(args.mcs, args.part, **hw_args))
         elif args.cmd == "vision-prepare":
             _print(core.kv260_vision_prepare(
                 args.session, args.input, args.golden, args.format, args.ppc,
@@ -243,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
             ))
         elif args.cmd == "job":
             _print(core.job_status(args.job_id))
-    except core.BridgeError as e:
+    except (core.BridgeError, ValueError, OSError) as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         return 1
     return 0

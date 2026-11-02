@@ -348,6 +348,7 @@ def _inspect_environment(version: str, distro: str, refresh: bool) -> dict:
     capabilities = {
         "quantize": probe.returncode == 0 and bool(modules.get("pytorch_nndct")),
         "compile": checks["compiler"] and checks["kv260_arch"],
+        "compiler": checks["compiler"],
         "analyze": xir_available,
         "runtime_api": xir_available and vart_available,
         "kv260_arch": checks["kv260_arch"],
@@ -539,13 +540,13 @@ def validate_request(action: str = "inspect", work_dir: str = "", model: str = "
     if action in {"compile", "pipeline"}:
         if not _NETWORK.fullmatch(network_name):
             raise VitisAIError("network_name 必须是安全的标识符")
-        forbidden = {"-x", "--xmodel", "-a", "--arch", "-o", "--output_dir", "-n", "--net_name"}
-        if any(
-            option in forbidden or any(
-                option.startswith(flag + "=") for flag in forbidden if flag.startswith("--")
-            ) for option in options
-        ):
-            raise VitisAIError("compiler_options 不能覆盖 model/arch/output/network 参数")
+        managed = ("--xmodel", "--arch", "--output_dir", "--net_name")
+        for option in options:
+            flag = option.split("=", 1)[0]
+            if option.startswith(("-x", "-a", "-o", "-n")) or (
+                flag.startswith("--") and any(name.startswith(flag) for name in managed)
+            ):
+                raise VitisAIError("compiler_options 不能覆盖 model/arch/output/network 参数")
     if action in {"quantize", "pipeline"} and not script:
         raise VitisAIError(f"{action} 需要 script=量化 Python 脚本")
     return {
@@ -572,6 +573,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
     )
     user_args = request["args"]
     options = request["compiler_options"]
+    verification = "TARGET_BOARD_INFERENCE_NOT_VERIFIED" if arch_json else "KV260_BOARD_INFERENCE_NOT_VERIFIED"
     declared_inputs = request["cache_inputs"]
     resolved_version = request["version"]
     environment = _inspect_environment(resolved_version, distro, refresh)
@@ -584,6 +586,8 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
         "pipeline": ("quantize", "compile", "analyze"),
         "smoke": ("quantize",),
     }[action]
+    if arch_json:
+        required = tuple("compiler" if name == "compile" else name for name in required)
     missing = [name for name in required if not environment["capabilities"].get(name)]
     if missing:
         raise VitisAIError(f"Vitis AI 环境不完整: {', '.join(missing)}")
@@ -632,7 +636,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
                 + int(compiled.get("process_launches", 0))
             ),
             "mcp_calls": 1,
-            "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+            "limitations": [verification],
             **({"stages": {"quantize": quantized, "compile": compiled}}
                if detail == "standard" else {}),
         }
@@ -657,7 +661,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
         result = {
             "status": "success", "action": action, "version": resolved_version,
             "model": _project_model(summary, detail), "process_launches": 1,
-            "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+            "limitations": [verification],
         }
         if detail == "standard":
             result["log"] = str(log_path)
@@ -695,7 +699,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
                     "artifacts": [str(item) for item in artifacts],
                     "model": _project_model(cached_model, detail),
                     "process_launches": 0,
-                    "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+                    "limitations": [verification],
                 }
         run = _run_dir(action)
         log_path = run / "run.log"
@@ -747,7 +751,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
             "cache": {"hit": False, "fingerprint": fingerprint[:16]},
             "artifacts": artifacts, "model": _project_model(model_summary, detail),
             "process_launches": 1,
-            "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+            "limitations": [verification],
         }
         if detail == "standard":
             result["log"] = str(log_path)
@@ -782,7 +786,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
                     "artifacts": [str(quant_info), str(cached_xmodel)],
                     "cache": {"hit": True, "fingerprint": smoke_fingerprint[:16]},
                     "process_launches": 0,
-                    "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+                    "limitations": [verification],
                 }
         run = _run_dir(action)
         log_path = run / "run.log"
@@ -816,7 +820,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
                     "artifacts": [str(path) for path in cached_artifacts],
                     "cache": {"hit": True, "fingerprint": quant_fingerprint[:16]},
                     "process_launches": 0,
-                    "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+                    "limitations": [verification],
                 }
         run = _run_dir(action)
         log_path = run / "run.log"
@@ -847,7 +851,7 @@ def flow(action: str = "inspect", work_dir: str = "", model: str = "",
     result = {
         "status": "success", "action": action, "version": resolved_version,
         "output": output, "artifacts": artifacts, "process_launches": 1,
-        "limitations": ["KV260_BOARD_INFERENCE_NOT_VERIFIED"],
+        "limitations": [verification],
     }
     if action == "smoke":
         result["checks"] = _parse_smoke_result(log_path)

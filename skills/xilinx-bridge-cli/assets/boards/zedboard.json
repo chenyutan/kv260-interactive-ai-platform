@@ -1,0 +1,8 @@
+{
+  "name": "ZedBoard",
+  "part": "xc7z020clg484-1",
+  "jtag": {
+    "server": "localhost:3121",
+    "device_part": "xc7z020"
+  }
+}

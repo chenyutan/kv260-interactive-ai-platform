@@ -1,0 +1,8 @@
+{
+  "name": "Basys 3",
+  "part": "xc7a35tcpg236-1",
+  "jtag": {
+    "server": "localhost:3121",
+    "device_part": "xc7a35t"
+  }
+}

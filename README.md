@@ -2,6 +2,8 @@
 
 观众站在摄像头前，以身体动作绘制水墨、控制游戏，或跟练八段锦和太极。KV260 负责本地视觉推理与画面显示，DeepSeek 助手提供玩法说明、创作建议及成绩复盘。
 
+[参赛技术报告（PDF，22 页）](docs/technical-report.pdf) 包含整机实物、FPGA 图像前处理电路、Hourglass 姿态推理流程及板端测试结果。
+
 ## 源码目录
 
 | 目录 | 内容 |
@@ -13,7 +15,7 @@
 | fruit-slice、ink-fight | 主机调用的独立游戏引擎和配套资源 |
 | integrations | PAL 移植和 TheXTech 原生控制补丁 |
 | models、tools | 模型来源与照片模型恢复、训练代码、动作标注工具 |
-| skills/xilinx-bridge-cli | 标准 Agent Skill，内含可独立运行的桥接 CLI |
+| [skills/xilinx-bridge-cli](skills/xilinx-bridge-cli/SKILL.md) | 标准 Agent Skill，自带 CLI。可选择 Basys 3、ZedBoard、KV260 或填写自定义板卡配置 |
 
 ## 从源码构建
 

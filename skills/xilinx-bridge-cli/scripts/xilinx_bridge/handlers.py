@@ -348,11 +348,13 @@ def hw_list_devices(server: str = "") -> str:
 
 @expose
 def hw_program_fpga(bit_file: str, ltx_file: str = "", target_index: int = 0,
-                    device_index: int = -1, server: str = "") -> str:
+                    device_index: int = -1, server: str = "",
+                    target_name: str = "", device_name: str = "", device_part: str = "") -> str:
     """通过 JTAG 把比特流下载到 FPGA。ltx_file 为 ILA 探针文件(可选)。
     device_index=-1 默认自动选择唯一可编程 FPGA；显式索引对应 hw_list_devices。
     K26运行Linux时不要用裸JTAG做在线重配置，已有OS卡死记录；优先xmutil/FPGA Manager。"""
-    return _j(core.program_fpga, bit_file, ltx_file, target_index, device_index, server)
+    return _j(core.program_fpga, bit_file, ltx_file, target_index, device_index, server,
+              target_name=target_name, device_name=device_name, device_part=device_part)
 
 
 @expose
@@ -360,7 +362,7 @@ def hw_ila_capture(ltx_file: str, bit_file: str = "", depth: int = 1024,
                    trigger: dict = None, ila_index: int = 0,
                    target_index: int = 0, device_index: int = -1,
                    timeout_s: int = 60, server: str = "",
-                   trigger_position: int = 0) -> str:
+                   trigger_position: int = 0, target_name: str = "", device_name: str = "", device_part: str = "") -> str:
     """抓取 ILA 波形: 可选先下载 bit_file, 然后布防触发并导出 CSV。
     trigger: {"probe名": "比较值"}, 如 {"led": "1'b1"}; 裸值自动按相等比较，
     也可显式写 eq/ne/lt/le/gt/ge；空则立即触发。trigger_position 控制触发前样本数。
@@ -368,7 +370,7 @@ def hw_ila_capture(ltx_file: str, bit_file: str = "", depth: int = 1024,
     已加载匹配BIT/LTX时省略bit_file；K26裸JTAG重编程可能使运行中Linux卡死。"""
     return _j(core.ila_capture, ltx_file, bit_file, depth, trigger, ila_index,
               target_index, device_index, timeout_s, server,
-              trigger_position=trigger_position)
+              trigger_position=trigger_position, target_name=target_name, device_name=device_name, device_part=device_part)
 
 
 @expose
@@ -383,11 +385,12 @@ def hw_generate_mcs(bit_file: str, out_mcs: str, size_mb: int = 16,
 @expose
 def hw_program_flash(mcs_file: str, flash_part: str, target_index: int = 0,
                      device_index: int = -1, erase: bool = True,
-                     verify: bool = True, server: str = "") -> str:
+                     verify: bool = True, server: str = "",
+                     target_name: str = "", device_name: str = "", device_part: str = "") -> str:
     """通过 JTAG 间接烧写配置 FLASH。flash_part 如 mt25qu128-spi-x1_x2_x4 /
     mx25l25645g-spi-x1_x2_x4 等(可用 vivado_run_tcl 执行 get_cfgmem_parts 查询)。"""
     return _j(core.program_flash, mcs_file, flash_part, target_index,
-              device_index, erase, verify, server)
+              device_index, erase, verify, server, target_name=target_name, device_name=device_name, device_part=device_part)
 
 
 # ============================ Vitis ============================

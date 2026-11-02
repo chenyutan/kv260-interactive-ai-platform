@@ -28,7 +28,7 @@ def matches(value, annotation):
     return type(value) is annotation
 
 
-def local_tools(argv):
+def local_tools(argv, board_profile=None):
     from xilinx_bridge.cli import failed_result
     from xilinx_bridge.handlers import TOOLS
 
@@ -53,6 +53,8 @@ def local_tools(argv):
             payload = json.loads(source.decode("utf-8-sig"))
         if not isinstance(payload, dict):
             raise ValueError("arguments must be a JSON object")
+        if board_profile is not None:
+            payload = board_profile.parameters(args.tool, payload)
         bound = signature.bind(**payload)
         hints = get_type_hints(handler)
         for key, value in bound.arguments.items():
@@ -64,6 +66,11 @@ def local_tools(argv):
             if payload.get("wait") is False:
                 raise ValueError("foreground CLI requires wait=true; use 'serve' for managed asynchronous jobs")
             payload["wait"] = True
+        if board_profile is not None and args.tool == "kv260_board_flow":
+            identity = board_profile.inspect_linux()
+            reported = " ".join([identity["reported_model"], *identity["compatible"]])
+            if "kv260" not in reported.lower():
+                raise ValueError("The SSH target device tree did not identify a KV260 carrier")
         result = json.loads(handler(**payload))
     except (TypeError, ValueError, OSError) as exc:
         print(json.dumps({"status": "error", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
@@ -82,10 +89,23 @@ def main(argv):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
+    profile = None
+    if argv[:1] == ["--board-profile"]:
+        from xilinx_bridge.board_profile import BoardProfile
+        if len(argv) < 3:
+            print("Usage: bridge.py --board-profile FILE COMMAND ...", file=sys.stderr)
+            return 2
+        try:
+            profile = BoardProfile(argv[1])
+        except (ValueError, OSError) as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return 2
+        argv = argv[2:]
     if argv[:1] in (["tools"], ["describe"], ["call"]):
-        return local_tools(argv)
+        return local_tools(argv, profile)
     if argv[:1] in (["-h"], ["--help"]):
-        print("Agent tools: tools | describe TOOL | call TOOL [--file FILE|-]\nBridge commands:", flush=True)
+        print("Board selection: --board-profile FILE COMMAND ...\n"
+              "Agent tools: tools | describe TOOL | call TOOL [--file FILE|-]\nBridge commands:", flush=True)
     if argv[:1] == ["build"] and "--wait" not in argv:
         argv = [*argv, "--wait"]
     if argv[:1] == ["vitis-ai"] and "--no-wait" in argv:
@@ -93,7 +113,7 @@ def main(argv):
         return 2
     from xilinx_bridge.cli import main as bridge_cli
     try:
-        return bridge_cli(argv)
+        return bridge_cli(argv, board_profile=profile)
     except ModuleNotFoundError as exc:
         if exc.name == "fastmcp" and argv[:1] == ["serve"]:
             print("Install fastmcp>=2 in this Python environment to use the optional MCP transport.", file=sys.stderr)

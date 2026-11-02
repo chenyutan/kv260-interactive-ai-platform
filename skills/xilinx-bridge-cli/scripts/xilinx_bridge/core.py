@@ -1300,19 +1300,27 @@ def hw_list(server: str = "", wait: bool = True, timeout: int = 120) -> dict:
     )
 
 
+def _hw_input(filename: str, label: str) -> str:
+    path = Path(filename).expanduser().resolve()
+    if not path.is_file():
+        raise BridgeError(f"{label} 文件不存在: {path}")
+    return str(path)
+
+
 def program_fpga(bit: str, ltx: str = "", target_index: int = 0,
                  device_index: int = -1, server: str = "",
-                 wait: bool = True, timeout: int = 600) -> dict:
-    if not Path(bit).is_file():
-        raise BridgeError(f"比特流文件不存在: {bit}")
-    if ltx and not Path(ltx).is_file():
-        raise BridgeError(f"LTX 文件不存在: {ltx}")
+                 wait: bool = True, timeout: int = 600, *,
+                 target_name: str = "", device_name: str = "", device_part: str = "") -> dict:
+    bit = _hw_input(bit, "比特流")
+    ltx = _hw_input(ltx, "LTX") if ltx else ""
     _bounded_int(target_index, "target_index", 0, 1024)
     _bounded_int(device_index, "device_index", -1, 1024)
     srv = server or config.load().get("hw_server_url", "localhost:3121")
     tcl = tcl_lib.render(tcl_lib.PROGRAM_FPGA, SERVER=tcl_lib.q(srv), BIT=tcl_lib.q(bit),
-                         LTX=tcl_lib.q(ltx) if ltx else '""',
-                         TIDX=target_index, DIDX=device_index)
+                         LTX=tcl_lib.q(ltx),
+                         TIDX=target_index, DIDX=device_index,
+                         TARGET_NAME=tcl_lib.q(target_name), DEVICE_NAME=tcl_lib.q(device_name),
+                         DEVICE_PART=tcl_lib.q(device_part))
     return run_vivado_tcl(
         tcl, "program_fpga", wait, timeout, resource_key=_hardware_lock_key(srv)
     )
@@ -1322,11 +1330,10 @@ def ila_capture(ltx: str, bit: str = "", depth: int = 1024,
                 trigger: dict | None = None, ila_index: int = 0,
                 target_index: int = 0, device_index: int = -1,
                 timeout_s: int = 60, server: str = "",
-                wait: bool = True, trigger_position: int = 0) -> dict:
-    if ltx and not Path(ltx).is_file():
-        raise BridgeError(f"LTX 文件不存在: {ltx}")
-    if bit and not Path(bit).is_file():
-        raise BridgeError(f"比特流文件不存在: {bit}")
+                wait: bool = True, trigger_position: int = 0, *,
+                target_name: str = "", device_name: str = "", device_part: str = "") -> dict:
+    ltx = _hw_input(ltx, "LTX") if ltx else ""
+    bit = _hw_input(bit, "比特流") if bit else ""
     _bounded_int(depth, "depth", 1, 1048576)
     _bounded_int(timeout_s, "timeout_s", 1, 86400)
     _bounded_int(trigger_position, "trigger_position", 0, depth - 1)
@@ -1348,9 +1355,9 @@ def ila_capture(ltx: str, bit: str = "", depth: int = 1024,
     jd = str(jdir).replace("\\", "/")
     tcl = tcl_lib.render(
         tcl_lib.ILA_CAPTURE, SERVER=tcl_lib.q(srv),
-        BIT=tcl_lib.q(bit) if bit else '""',
-        LTX=tcl_lib.q(ltx) if ltx else '""',
+        BIT=tcl_lib.q(bit), LTX=tcl_lib.q(ltx),
         TIDX=target_index, DIDX=device_index, ILA_IDX=ila_index,
+        TARGET_NAME=tcl_lib.q(target_name), DEVICE_NAME=tcl_lib.q(device_name), DEVICE_PART=tcl_lib.q(device_part),
         DEPTH=depth, TIMEOUT=timeout_s, TRIGGER_POSITION=trigger_position,
         TRIGGER_SETUP=tcl_lib.trigger_setup_tcl(trigger),
         RUN_OPTIONS="" if trigger else "-trigger_now",
@@ -1392,14 +1399,15 @@ def generate_mcs(bit: str, out_mcs: str, size_mb: int = 16,
 
 def program_flash(mcs: str, flash_part: str, target_index: int = 0,
                   device_index: int = -1, erase: bool = True, verify: bool = True,
-                  server: str = "", wait: bool = True, timeout: int = 3600) -> dict:
-    if not Path(mcs).is_file():
-        raise BridgeError(f"MCS 文件不存在: {mcs}")
+                  server: str = "", wait: bool = True, timeout: int = 3600, *,
+                  target_name: str = "", device_name: str = "", device_part: str = "") -> dict:
+    mcs = _hw_input(mcs, "MCS")
     _bounded_int(target_index, "target_index", 0, 1024)
     _bounded_int(device_index, "device_index", -1, 1024)
     srv = server or config.load().get("hw_server_url", "localhost:3121")
     tcl = tcl_lib.render(tcl_lib.PROGRAM_FLASH, SERVER=tcl_lib.q(srv), MCS=tcl_lib.q(mcs),
                          FLASH_PART=tcl_lib.q(flash_part),
+                         TARGET_NAME=tcl_lib.q(target_name), DEVICE_NAME=tcl_lib.q(device_name), DEVICE_PART=tcl_lib.q(device_part),
                          TIDX=target_index, DIDX=device_index,
                          ERASE=1 if erase else 0, VERIFY=1 if verify else 0)
     return run_vivado_tcl(

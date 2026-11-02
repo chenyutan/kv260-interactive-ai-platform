@@ -1,0 +1,9 @@
+{
+  "name": "Kria KV260",
+  "part": "xck26-sfvc784-2LV-c",
+  "adapter": "kv260",
+  "jtag": {
+    "server": "localhost:3121",
+    "device_part": "xck26"
+  }
+}
