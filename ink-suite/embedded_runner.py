@@ -474,7 +474,7 @@ class Controller:
             return False
         def send():
             try:
-                if command=='clear' and self.visitor_ink:self.visitor_ink.snapshot()
+                if command=='clear' and self.visitor_ink:self.visitor_ink.snapshot(os.environ.get('INKSUITE_VISITOR_SESSION'))
                 url=self.args.pose_url.removesuffix('/api/state')+'/api/command'
                 request=urllib.request.Request(url,data=json.dumps(dict(command=command,**extra)).encode(),
                     headers={'Content-Type':'application/json'})
@@ -484,10 +484,12 @@ class Controller:
                     if len(raw)>262144:raise ValueError('Oversized artwork response')
                     result=json.loads(raw)
                 if not isinstance(result,dict):raise ValueError('Invalid artwork response')
-                if command=='save' and result.get('accepted') is True and self.visitor_ink:self.visitor_ink.snapshot()
+                if command=='save' and result.get('accepted') is True and self.visitor_ink:
+                    from network_share import archive_saved
+                    archive_saved(result['path'],marks=result.get('event_count',0))
                 GLib.idle_add(deliver,result)
             except Exception as error:GLib.idle_add(deliver,None,str(error))
-        threading.Thread(target=send,daemon=True).start()
+        threading.Thread(target=send,daemon=(command!='save')).start()
     def visitor_tick(self):
         if self.closed:return False
         try:self.visitor_reporter.observe(self.app.game)

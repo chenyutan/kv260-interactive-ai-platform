@@ -18,6 +18,7 @@ foreach ($test in 'run_control_sim','run_sim','run_roi_sim','run_dma_sim','run_i
 New-Item -ItemType Directory -Force platform-source | Out-Null
 git clone --recursive --branch xlnx_rel_v2022.1 https://github.com/Xilinx/kria-vitis-platforms.git platform-source/kria-vitis-platforms-xlnx_rel_v2022.1
 if ($LASTEXITCODE) { throw "platform clone failed" }
+New-Item -ItemType Directory -Force packaged-ip,build/base | Out-Null
 foreach ($step in 'package_ip','restore_platform','restore_dpu_package','integrate_platform','usb_platform','build_platform') {
     vivado -mode batch -source "./$step.tcl" -log "./$step.log"
     if ($LASTEXITCODE) { throw "$step failed" }
@@ -42,7 +43,7 @@ Pop-Location
 
 ## 2. 准备板卡与摄像头
 
-基准板为 KV260 revB，使用本地显示器、USB 3.0 摄像头、ARM64 Ubuntu 桌面、可访问的 SD 卡和串口控制台。软件依赖包括 Python 3.10、NumPy、Pillow、OpenCV、GTK3/PyGObject、Cairo、GStreamer、Mali GLES2/EGL、C/C++ 编译工具、`xmutil`、XRT/zocl、XIR、VART 和 `xdputil`。比赛机的兼容 VART 库放在 `~/.local/share/xilinx-agent-bridge/vart2-static-init`，其中包括 `libvart-xrt-device-handle.so.2`、`libvart-dpu-controller.so.2`。已有匹配 VART 运行库的镜像可用系统库，核对 `/usr/bin/python3 -c 'import xir,vart'` 和下文 DPU 探测。
+基准板为 KV260 revB，使用本地显示器、USB 3.0 摄像头、ARM64 Ubuntu 桌面、可访问的 SD 卡和串口控制台。软件依赖包括 Python 3.10、NumPy、Pillow、qrcode、OpenCV、GTK3/PyGObject、Cairo、GStreamer、Mali GLES2/EGL、C/C++ 编译工具、`xmutil`、XRT/zocl、XIR、VART 和 `xdputil`。比赛机的兼容 VART 库放在 `~/.local/share/xilinx-agent-bridge/vart2-static-init`，其中包括 `libvart-xrt-device-handle.so.2`、`libvart-dpu-controller.so.2`。已有匹配 VART 运行库的镜像可用系统库，核对 `/usr/bin/python3 -c 'import xir,vart'` 和下文 DPU 探测。
 
 实测相机为 0bda:5858、固件修订 0001、SuperSpeed，输出 1080p60 YUYV。它需要项目中的 UVC 带宽补丁。已有匹配内核时，以 `test -e /sys/module/uvcvideo/parameters/bodyink_ss_bandwidth` 验证后进入下一节。重建实测内核时采用以下顺序：
 
@@ -52,12 +53,15 @@ Pop-Location
 
 ## 3. 模型、运行目录与本机库
 
-以下 Bash 命令用于首次安装在干净的板端 `ubuntu` 账户，先进入上文准备的仓库副本。对已有演示机，另备工作副本并保留原固件、配置和作品。`camera/configure_capture.py` 从目标设备读取序列号并写入**该副本**的采集模板，应在复制运行目录之前执行。把 `/dev/video0` 换成实际相机的 index 0 节点。
+以下 Bash 命令用于首次安装在干净的板端 `ubuntu` 账户，先进入上文准备的仓库副本。对已有演示机，另备工作副本并保留原固件、配置和作品。`camera/configure_capture.py` 从目标设备读取序列号并写入**该副本**的采集模板，应在复制运行目录之前执行。把 `/dev/video0` 换成实际相机的 index 0 节点。用 `id -nG` 核对当前板端账户具有 `video` 和 `render` 组权限。若首次配置缺少组，管理员执行 `sudo usermod -aG video,render ubuntu`，重新登录后继续。
 
 ~~~bash
 set -e
 repo=$(pwd -P)
+sudo apt-get install python3-qrcode python3-pil
+/usr/bin/python3 -c "from io import BytesIO; import qrcode; out=BytesIO(); qrcode.make('bodyink').save(out, format='PNG'); assert out.getvalue().startswith(b'\x89PNG')"
 python3 camera/configure_capture.py /dev/video0
+sudo sh camera/install_helpers.sh
 for component in bodyink-live ink-suite ink-fight fruit-slice; do
     test ! -e "/home/ubuntu/$component"
     cp -a "$repo/$component" "/home/ubuntu/$component"
@@ -80,9 +84,26 @@ cd "$repo"
 
 按 [官方模型清单](../models/hourglass/model-official.yaml) 选 `zcu102 & zcu104 & kv260` 的 Hourglass MPII 模型，将解压出的 `hourglass-pe_mpii.xmodel` 放入新建的 `/home/ubuntu/bodyink-live/models/`，在该目录执行 `sha256sum -c "$repo/models/hourglass/sha256sums.txt"`。动作模板、校准文件及模型/ROI 身份描述均在 `bodyink-live/dataset/`，正式服务启用 A01、A02、A03、A04、A06。各游戏独立素材、教学视频及系统依赖的取得方式见 [外部资源与许可](../third_party.md)。
 
+管理员从已核对的代码包安装启动脚本。两份脚本保存在 root 所有的 `/usr/local/libexec/bodyink/`，安装程序逐级检查父目录的所有者和写权限。修改相机配置后需重新安装恢复脚本。
+
+在 Linux 主机或 WSL 中安装 Python 3、NumPy 和 Pillow 后，可以先运行以下两项服务回归。第一项检查本地姿态 API 的地址、来源与清屏权限；第二项向实际服务进程发送 SIGTERM，在模拟 DMA 仍忙时检查它是否保留缓冲区，并在对应标签完成后退出。两项均使用测试数据。
+
+~~~bash
+python3 board/test_local_api.py -v
+python3 board/test_dma_shutdown.py -v
+~~~
+
 ## 4. 装载 PL 并先比对一帧
 
-下列操作在板端仓库根目录执行，目标卡应处于 `k26-starter-kits` 独占活动槽或已加载匹配的 `bodyink-usb-pl`。先用 `xmutil listapps` 查看活动槽，确认没有其他程序占用 XRT。随附启动脚本先验证活动槽和 VCU 绑定状态，再装载指定固件。现场已有同名固件时应停止使用它的服务并保留原件后再升级。
+下列操作在板端仓库根目录执行，目标卡应处于 `k26-starter-kits` 独占活动槽或已加载匹配的 `bodyink-usb-pl`。先用 `xmutil listapps` 查看活动槽，确认没有其他程序占用 XRT。随附启动脚本先验证活动槽和 VCU 绑定状态，再装载指定固件。更换同名固件前，先停止相关服务，确认 DMA 已排空并备份原固件、校验清单与配置。复制新文件只会更新磁盘上的固件。若当前已装载同名旧版本，请在维护窗口将板卡启动到原厂槽，再按以下步骤装载本次构建；仅凭相同的 DPU 指纹不能区分两个前处理版本。
+
+在目标内核上查看 `grep CONFIG_UIO_PDRV_GENIRQ /boot/config-$(uname -r)`。若为 `=m`，在模块首次加载前执行以下命令。若为 `=y`，将 `uio_pdrv_genirq.of_id=generic-uio` 加入板卡实际启动项的内核命令行，重启后核对 `/proc/cmdline`。若模块已加载但未匹配，在维护时段重启以应用参数。未启用该驱动时需先启用并部署匹配内核。采用串口测试启动时保留原厂启动项。
+
+~~~bash
+# CONFIG_UIO_PDRV_GENIRQ=m
+printf '%s\n' 'options uio_pdrv_genirq of_id=generic-uio' | sudo tee /etc/modprobe.d/bodyink-uio.conf >/dev/null
+sudo modprobe uio_pdrv_genirq of_id=generic-uio
+~~~
 
 ~~~bash
 cd "$repo/fpga/deployment"
@@ -96,14 +117,17 @@ install -d -m 0755 /home/ubuntu/bodyink-live/pl-deploy-0914
 touch /home/ubuntu/bodyink-live/pl-deploy-0914/owner.lock
 chmod 0660 /home/ubuntu/bodyink-live/pl-deploy-0914/owner.lock
 printf 'firmware: %s/bodyink-usb-pl.xclbin\n' "$dest" | sudo tee /etc/vart.conf >/dev/null
-sudo env LD_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init bash /home/ubuntu/bodyink-live/prepare_dpu.sh
+sudo /usr/local/libexec/bodyink/prepare_dpu.sh
 sudo udevadm trigger --subsystem-match=uio --action=add
 sudo udevadm settle
+# 以登录的 ubuntu 用户核对唯一设备名、地址、窗口大小和读写权限
+cd /home/ubuntu/bodyink-live/pl_bridge
+/usr/bin/python3 -c "import os; from pl_preprocess import find_uio; node=find_uio(); fd=os.open(node, os.O_RDWR); os.close(fd); print(node)"
 cd "$repo"
 python3 board/check_pl.py --runtime /home/ubuntu/bodyink-live
 ~~~
 
-预期探测输出含 `BODYINK_DPU_READY: 0x101000016010407`，在 `/sys/class/uio/uio*/` 可找到名为 `bodyink-preprocess` 的窗口，基址 `0x81000000`、长度 `0x1000`。`check_pl.py` 使用同一窗口实际提交合成 YUYV 帧，输出 `equal_bytes` 为 196608，对应 256×256×3 的 INT8 张量。需在启动视觉服务前执行，以便该进程独占预处理器。历史实板的 36 组结果另见 [上板记录](../board/README.md)。
+预期探测输出含 `BODYINK_DPU_READY: 0x101000016010407`，在 `/sys/class/uio/uio*/` 可找到名为 `bodyink-preprocess` 的窗口，基址 `0x81000000`、长度 `0x1000`。`check_pl.py` 使用同一窗口实际提交合成 YUYV 帧，输出 `equal_bytes` 为 196608，对应 256×256×3 的 INT8 张量。需在启动视觉服务前执行，以便该进程独占预处理器。若取消后仍有总线事务，视觉服务将停止提交新帧，同时保留设备锁和输入输出缓冲区，直至读到本次任务的完成标记。此时 `systemctl stop` 会等待。若硬件持续无响应，请隔离设备后整板断电重启；等待期间不要强杀进程或卸载固件。历史实板的 36 组结果另见 [上板记录](../board/README.md)。
 
 ## 5. 连通摄像、推理及交互
 
@@ -131,4 +155,4 @@ curl -fsS http://127.0.0.1:8088/api/state
 python3 /home/ubuntu/ink-suite/launch.py --fullscreen
 ~~~
 
-快照命令返回实际宽、高和时间戳。观众入镜后，状态接口随动作更新关节点；在“创作”中移动手臂可以看到连续笔迹，在“健康”中可打开八段锦跟练。DeepSeek 在线功能由板端 `~/.config/ink-suite/deepseek.json` 读取用户自行配置的 `api_key`，将文件权限设为 `0600`。未配置时仍可通过本地界面操作。相机服务未启动先检查所选设备、带宽参数和本地登录门控，DPU 未就绪则查看 `journalctl -u bodyink-dpu.service -b`。
+本地视觉接口监听 `127.0.0.1:8088`。扫码时手机与 KV260 接入同一 Wi-Fi，访问访客页面的 TCP 8091 端口；可在板端用 `ss -ltn` 区分两者。快照命令返回实际宽、高和时间戳。观众入镜后，状态接口随动作更新关节点；在“创作”中移动手臂可以看到连续笔迹，在“健康”中可打开八段锦跟练。DeepSeek 在线功能由板端 `~/.config/ink-suite/deepseek.json` 读取用户自行配置的 `api_key`，将文件权限设为 `0600`。未配置时仍可通过本地界面操作。相机服务未启动先检查所选设备、带宽参数和本地登录门控，DPU 未就绪则查看 `journalctl -u bodyink-dpu.service -b`。

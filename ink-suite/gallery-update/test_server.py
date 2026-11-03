@@ -1,6 +1,4 @@
 """Real local HTTP contract tests. Temporary artwork only; no camera or board."""
-import contextlib
-import hashlib
 import importlib.util
 import io
 import json
@@ -12,14 +10,16 @@ import threading
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.parse import quote, urlsplit
 from urllib.request import Request, build_opener, ProxyHandler
 
 ROOT=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('tested_gallery_server',ROOT/'server.py')
 server=importlib.util.module_from_spec(spec);spec.loader.exec_module(server)
-sys.path.insert(0,str(ROOT/'integration'))
-from network_share import fetch_share
+sys.path.insert(0,str(ROOT.parents[1]/'bodyink-live'))
+sys.path.insert(0,str(ROOT.parent))
+from network_share import archive_saved, fetch_share, ShareUnavailable
+from visitor.portal import Portal
+from visitor.store import VisitorStore
 from PIL import Image
 
 
@@ -89,25 +89,75 @@ class HttpGalleryTests(unittest.TestCase):
             self.assertLessEqual(im.width,960);self.assertLessEqual(im.height,720)
         self.assertEqual(self.json('/api/artworks/'+item['id'])['name'],self.name)
 
-    def test_share_and_native_helper_real_http(self):
-        item=self.item()
-        result=fetch_share(self.name,base=self.base,opener=self.opener.open)
-        self.assertEqual(result['url'],'http://192.168.43.5:8090'+item['page_url'])
-        self.assertEqual(result['name'],self.name)
-        self.assertTrue(result['png'].startswith(b'\x89PNG'))
-        homepage=fetch_share(base=self.base,opener=self.opener.open)
-        self.assertEqual(homepage['url'],'http://192.168.43.5:8090/')
-        self.assertIsNone(homepage['name'])
+    def test_archive_is_local_and_does_not_issue_public_file_links(self):
+        with self.assertRaises(ValueError):
+            server.Server(('0.0.0.0', 0), self.gallery)
+        with self.assertRaises(HTTPError) as rejected:
+            self.opener.open(Request(self.base+'/api/artworks', headers={'Host': 'external.invalid'}))
+        self.assertEqual(rejected.exception.code, 403)
+        for path in ['/api/share', '/api/qr.png', '/api/artworks/'+self.item()['id']+'/qr.png']:
+            self.assertEqual(self.request(path)[0], 410)
 
-    def test_qr_decodes_to_artwork_page(self):
-        try:import cv2;import numpy as np
-        except ImportError:self.skipTest('OpenCV unavailable; PNG/API contract tested separately')
-        item=self.item();status,headers,body=self.request('/api/artworks/'+item['id']+'/qr.png')
-        self.assertEqual(status,200)
-        self.assertEqual(headers.get_all('Cache-Control'),['no-store'])
-        image=cv2.imdecode(np.frombuffer(body,dtype=np.uint8),cv2.IMREAD_GRAYSCALE)
-        text,points,_=cv2.QRCodeDetector().detectAndDecode(image)
-        self.assertIsNotNone(points);self.assertEqual(text,'http://192.168.43.5:8090'+item['page_url'])
+    def test_native_saved_art_is_private_through_claim_and_session_rotation(self):
+        import http.client
+        with tempfile.TemporaryDirectory() as temp:
+            store=VisitorStore(temp)
+            portal=Portal(store,host='127.0.0.1',port=0).start()
+            self.addCleanup(portal.close)
+            local='http://127.0.0.1:'+str(portal.port)
+            wifi='http://192.168.43.5:'+str(portal.port)
+            def request(path, values=None, cookie=''):
+                conn=http.client.HTTPConnection('127.0.0.1',portal.port,timeout=3)
+                try:
+                    body=None if values is None else json.dumps(values)
+                    conn.request('GET' if body is None else 'POST',path,body=body,
+                                 headers={'Cookie':cookie,'Content-Type':'application/json','X-Ink-Visitor':'1'})
+                    r=conn.getresponse()
+                    return r.status,r.read(),r.getheader('Set-Cookie','').split(';')[0]
+                finally:conn.close()
+            def register(user):
+                code,_,cookie=request('/api/account/register',{'username':user,'password':'private-fixture-123','name':user})
+                self.assertEqual(code,201)
+                return cookie
+            alice=register('firstguest');bob=register('secondguest')
+            first=store.current();token=first['token']
+            env={'INK_VISITOR_DATABASE':str(store.path),'INK_VISITOR_PORT':str(portal.port),'INKSUITE_VISITOR_SESSION':first['id']}
+            wifi_info={'base_url':wifi,'address':'192.168.43.5','wireless_connected':True}
+            originals=[]
+            with patch.dict(os.environ,env), patch.object(portal.network,'snapshot',return_value=wifi_info):
+                for i,title in enumerate(('动作水墨','眼前风景 · 水墨写生','画中人 · 国风分身')):
+                    name=f'ink-20261103-120000-{i:06d}.png'
+                    path=self.works/name
+                    Image.new('RGB',(3,4),(i*30,90,200)).save(path)
+                    # Persist independently of the phone/Wi-Fi and before displaying its QR.
+                    with patch.object(portal.network,'snapshot',return_value={'base_url':None}):
+                        art=archive_saved(path,title,i)
+                        with self.assertRaises(ShareUnavailable):fetch_share(name)
+                    share=fetch_share(name)
+                    self.assertEqual(share['url'],wifi+'/v/'+token+'?art='+art)
+                    self.assertTrue(share['png'].startswith(b'\x89PNG'))
+                    originals.append(('/v/'+token+'/art/'+art+'.png',path.read_bytes()))
+                self.assertEqual(request('/v/'+token)[0],200)
+                self.assertEqual(request(originals[0][0])[0],401)
+                self.assertEqual(request('/api/account/claim',{'token':token},alice)[0],200)
+                for url,data in originals:self.assertEqual(request(url,cookie=alice)[:2],(200,data))
+                self.assertEqual(request('/api/account/claim',{'token':token},bob)[0],403)
+                store.begin_finish(first['id'],'fixture','fixture')
+                second=store.complete_finish(first['id'])
+                with self.assertRaises(ShareUnavailable):fetch_share(name)
+                with self.assertRaises(ValueError):archive_saved(path,title)
+                with patch.dict(os.environ,{'INKSUITE_VISITOR_SESSION':second['id']}):
+                    self.assertEqual(request('/api/account/claim',{'token':second['token']},bob)[0],200)
+                    # Raw historical files in the shared works folder have no new ownership.
+                    with self.assertRaises(ShareUnavailable):fetch_share(name)
+                    self.assertEqual(json.loads(request('/api/visitor/'+second['token'],cookie=bob)[1])['artworks'],[])
+                    for url,data in originals:
+                        self.assertEqual(request(url,cookie=alice)[:2],(200,data))
+                        self.assertEqual(request(url,cookie=bob)[0],403)
+                    self.assertEqual(request(originals[0][0].replace(token,second['token']),cookie=bob)[0],404)
+                with patch.dict(os.environ,{'INKSUITE_VISITOR_SESSION':''}):
+                    self.assertIsNone(archive_saved(path,title))
+                    with self.assertRaises(ShareUnavailable):fetch_share(name)
 
     def test_environment_artwork_retains_stylized_original_and_title(self):
         self.make_art(self.name,dict(theme='environment',events=[]))
@@ -121,8 +171,7 @@ class HttpGalleryTests(unittest.TestCase):
         outside=self.root/'secret.txt';outside.write_text('not-public',encoding='utf-8')
         paths=('/../secret.txt','/%2e%2e/secret.txt','/static/../server.py','/static/%2e%2e/server.py',
                '/server.py','/api/artworks/not-an-id','/artwork/'+('0'*24)+'.png',
-               '/artwork/'+self.item()['id']+'.jpg','/thumb/'+self.item()['id']+'.png',
-               '/api/share?name='+quote('../secret.txt'),'/api/share?name='+quote('..\\secret.txt'))
+               '/artwork/'+self.item()['id']+'.jpg','/thumb/'+self.item()['id']+'.png')
         for path in paths:
             with self.subTest(path=path):self.assertEqual(self.request(path)[0],404)
 
@@ -193,14 +242,6 @@ class HttpGalleryTests(unittest.TestCase):
         (self.fight/'invalid-result.json').write_text(json.dumps(dict(completed=True,result='playing')),encoding='utf-8')
         self.assertEqual(self.json('/api/scores?game=fight')['items'],[])
 
-    def test_network_unavailable_returns_503_without_broken_local_qr(self):
-        previous=self.gallery.public_url
-        try:
-            self.gallery.public_url=None
-            self.assertEqual(self.request('/api/share')[0],503)
-            self.assertEqual(self.request('/api/qr.png')[0],503)
-        finally:self.gallery.public_url=previous
-
     def test_health_static_headers_and_no_camera_commands(self):
         self.assertEqual(self.json('/health')['camera_used'],False)
         for path in ('/','/scores','/static/app.js','/static/style.css','/static/favicon.svg'):
@@ -208,7 +249,7 @@ class HttpGalleryTests(unittest.TestCase):
             self.assertEqual(status,200)
             self.assertTrue(body);self.assertEqual(headers['X-Content-Type-Options'],'nosniff')
             self.assertIn("frame-ancestors 'none'",headers['Content-Security-Policy'])
-        self.json('/api/network');self.json('/api/share')
+        self.json('/api/network')
         for call in self.ip_mock.call_args_list:
             self.assertEqual(call.args[0],['ip','-j','-4','addr','show','up'])
         # Public portal has no mutating or camera-control endpoint.

@@ -8,7 +8,7 @@ from PIL import Image
 from animated_artwork import AnimatedArtwork
 from animation_controller import AnimationController
 from animation_scene import SceneFollower
-from network_share import fetch_share,ShareUnavailable
+from network_share import archive_saved,fetch_share,ShareUnavailable
 
 BASE='http://127.0.0.1:8088'
 def art_bounds(width,height):
@@ -145,12 +145,12 @@ class Display:
             dialog=Gtk.Dialog(title='扫码带走作品' if share['name'] else '手机访问墨迹工坊',transient_for=self.window,modal=False)
             self.share_dialog=dialog;dialog.add_button('返回',Gtk.ResponseType.CLOSE)
             box=dialog.get_content_area();box.set_spacing(8);box.set_border_width(14)
-            title=Gtk.Label(label='作品已保存，扫码查看并下载原图' if share['name'] else '扫码浏览作品与游戏战绩')
+            title=Gtk.Label(label='扫码登录并关联本次游玩' if share['name'] else '扫码查看自己的作品与战绩')
             box.pack_start(title,False,False,0)
             box.pack_start(Gtk.Image.new_from_pixbuf(pixbuf),False,False,0)
             link=Gtk.Label(label=share['url']);link.set_selectable(True);link.set_line_wrap(True);link.set_max_width_chars(44)
             box.pack_start(link,False,False,0)
-            hint=Gtk.Label(label='请将手机与板卡连接到同一热点或局域网');hint.set_line_wrap(True);box.pack_start(hint,False,False,0)
+            hint=Gtk.Label(label='请连接展台 Wi-Fi，登录后即可查看并保存作品。');hint.set_line_wrap(True);box.pack_start(hint,False,False,0)
             dialog.connect('response',lambda d,_:d.destroy())
             dialog.connect('destroy',self.share_closed)
             dialog.show_all()
@@ -167,12 +167,16 @@ class Display:
                 with urllib.request.urlopen(request,timeout=15) as f:r=json.load(f)
                 if command=='save' and r.get('accepted'):
                     message='已保存到板卡 works/'+os.path.basename(r.get('path',''))+'（含事件 JSON）'
-                    GLib.idle_add(self.share_work,os.path.basename(r.get('path','')))
+                    try:
+                        archived=archive_saved(r['path'],marks=r.get('event_count',0))
+                    except Exception as exc:
+                        archived=None;message+='；游客作品集保存失败：'+str(exc)
+                    if archived:GLib.idle_add(self.share_work,os.path.basename(r['path']))
                 else:message=r.get('reason') or r.get('message') or ('操作完成' if r.get('accepted') else '操作未完成')
                 self.publish('notice',message)
                 if command in ("undo","clear"):GLib.idle_add(self.animation.cancel)
             except Exception:self.publish('notice','操作失败，请重试')
             finally:GLib.idle_add(button.set_sensitive,True)
-        threading.Thread(target=send,daemon=True).start()
+        threading.Thread(target=send,daemon=(command!='save')).start()
 
 if __name__=='__main__':Display();Gtk.main()

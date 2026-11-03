@@ -1,14 +1,53 @@
 """Single-owner MMIO driver for the verified BodyInk 0x42495001 register ABI.
 
 Use only after loading matching firmware. A failed cancellation leaves BOs
-owned by this object: the caller must reset/unload PL before releasing them.
+owned until the tagged DMA completion is observed, including during shutdown.
 """
+from contextlib import contextmanager
 import ctypes as c
 import fcntl
+import logging
 import mmap
 import os
+import signal
 import time
 from pathlib import Path
+
+
+@contextmanager
+def defer_dma_signals():
+    """CLI main thread: postpone exit until the caller has drained the current job."""
+    pending = []
+    def remember(signum, _frame):
+        if not pending:
+            pending.append(signum)
+    previous = {sig: signal.signal(sig, remember)
+                for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)}
+    try:
+        yield
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+        if pending:
+            raise SystemExit(128 + pending[0])
+
+
+def find_uio(root=Path('/sys/class/uio')):
+    matches = []
+    for item in root.glob('uio*'):
+        if (item / 'name').read_text().strip() == 'bodyink-preprocess':
+            matches.append(item)
+    if len(matches) != 1:
+        raise RuntimeError('Expected one bodyink-preprocess UIO device. Verify the overlay '
+                           'and uio_pdrv_genirq.of_id=generic-uio before starting.')
+    item, = matches
+    window = item / 'maps/map0'
+    address = int((window / 'addr').read_text().strip(), 0)
+    size = int((window / 'size').read_text().strip(), 0)
+    if address != Preprocessor.BASE or size != 4096:
+        raise RuntimeError(f'Unexpected {item.name} map0: {address:#x}, {size:#x}')
+    return '/dev/' + item.name
+
 
 class Preprocessor:
     BASE = 0x81000000
@@ -21,16 +60,7 @@ class Preprocessor:
         self.active_buffers = None
         self.lock = open('/home/ubuntu/bodyink-live/pl-deploy-0914/owner.lock', 'a+')
         fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        matches = []
-        for item in Path('/sys/class/uio').glob('uio*'):
-            addr = item/'maps/map0/addr'
-            if addr.exists() and int(addr.read_text().strip(), 0) == base:
-                if int((item/'maps/map0/size').read_text().strip(),0) != 4096:
-                    raise RuntimeError('Unexpected UIO register window size')
-                matches.append('/dev/'+item.name)
-        if len(matches) != 1:
-            raise RuntimeError('Matching PL UIO device absent; load verified firmware first')
-        fd = os.open(matches[0], os.O_RDWR | os.O_SYNC)
+        fd = os.open(find_uio(), os.O_RDWR | os.O_SYNC)
         try:
             self.mm = mmap.mmap(fd, 4096, mmap.MAP_SHARED,
                                 mmap.PROT_READ | mmap.PROT_WRITE, offset=0)
@@ -100,9 +130,9 @@ class Preprocessor:
             completed_status = None
             if status & 2 and not status & 1:
                 tag, cycles = self.read(0x34), self.read(0x38)
-                self.active_buffers = None
                 if tag != self.tag:
-                    raise RuntimeError('Completion tag mismatch')
+                    raise RuntimeError('Completion tag mismatch; DMA buffers retained')
+                self.active_buffers = None
                 if status & 12:
                     raise RuntimeError(f'DMA error/cancellation: {status:#x}')
                 return {'status': status, 'tag': tag, 'cycles': cycles,
@@ -112,12 +142,32 @@ class Preprocessor:
                 drain_deadline = time.monotonic() + 1.0
                 while time.monotonic() < drain_deadline:
                     status = self.read(8)
-                    if status & 2 and not status & 1:
+                    if status & 3 == 2 and self.read(0x34) == self.tag:
                         self.active_buffers = None
                         raise TimeoutError('DMA timed out; cancellation drained successfully')
                     time.sleep(.001)
-                raise RuntimeError('FATAL: DMA not drained; reset PL before freeing BOs or exiting')
+                raise RuntimeError('FATAL: DMA not drained; retain owner and BOs until tagged completion')
             time.sleep(.0001)
+
+    def drain_before_exit(self):
+        """Keep the XRT buffers, mapped window and lock alive through shutdown."""
+        if self.active_buffers is None:
+            return
+        logging.critical('DMA tag %s still owns its buffers. Waiting for the AXI completion; '
+                         'if stuck, isolate the board for a cold power cycle.', self.tag)
+        # A native wait or status-read failure may have preceded the timeout path.
+        try:
+            self.write(4, 2)
+        except Exception:
+            pass
+        while True:
+            try:
+                if self.read(8) & 3 == 2 and self.read(0x34) == self.tag:
+                    self.active_buffers = None
+                    return
+            except Exception:
+                pass
+            time.sleep(0.1)
 
     def close(self):
         if self.active_buffers is not None:

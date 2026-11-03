@@ -3,16 +3,16 @@ Description=BodyInk verified DPU overlay preparation
 Requires=dfx-mgr.service
 After=local-fs.target dfx-mgr.service
 Before=bodyink-live.service
-RequiresMountsFor=/home/ubuntu/bodyink-live
+RequiresMountsFor=/home/ubuntu
 StartLimitIntervalSec=300
 StartLimitBurst=1
 
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/home/ubuntu/bodyink-live
-Environment=LD_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init
-ExecStart=/bin/bash /home/ubuntu/bodyink-live/prepare_dpu.sh
+WorkingDirectory=/
+Environment=BODYINK_PROBE_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init
+ExecStart=/usr/local/libexec/bodyink/prepare_dpu.sh
 RemainAfterExit=yes
 Restart=no
 TimeoutStartSec=150

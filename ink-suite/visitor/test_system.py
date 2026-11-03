@@ -89,6 +89,19 @@ class FinishCase(StoreCase):
         self.assertTrue(self.coordinator.finish(self.session['id'])['repeated']);self.assertEqual(self.backend.clear_calls,1)
         self.assertEqual(self.store.view(self.session['token'])['status'],'archived')
         self.store.rename(self.session['token'],'已归档游客');self.assertEqual(self.store.leaderboard()[0]['items'][0]['name'],'已归档游客')
+    def test_photo_saved_during_zip_build_cannot_be_lost_on_finish(self):
+        original=self.store.report
+        def interleave(*args,**kwargs):
+            zipped=original(*args,**kwargs)
+            self.store.add_art(self.session['id'],PNG+b'photo',title='风景',source_name='ink-20261103-180000-000003.png')
+            return zipped
+        with patch.object(self.store,'report',side_effect=interleave):
+            with self.assertRaisesRegex(RuntimeError,'新的作品'):self.coordinator.finish(self.session['id'])
+        self.assertEqual(self.store.current()['status'],'active')
+        self.coordinator.finish(self.session['id'])
+        with zipfile.ZipFile(self.store.root/('archive-'+self.session['id']+'.zip')) as z:
+            self.assertIn(PNG+b'photo',[z.read(name) for name in z.namelist() if name.endswith('.png')])
+
     def test_clear_failure_recovers_after_restart(self):
         self.backend.fail=True
         with self.assertRaises(OSError):self.coordinator.finish(self.session['id'])
@@ -145,15 +158,21 @@ class ReporterCase(StoreCase):
         with patch.dict('os.environ',{'INKSUITE_VISITOR_DATA':self.temp.name,'INKSUITE_VISITOR_SESSION':self.session['id']}):
             self.assertIsNone(GameReporter.from_environment('fruit',disabled=True))
 
+from .account_test_support import login_fixture
+
 class HTTPCase(StoreCase):
     def setUp(self):super().setUp();self.portal=Portal(self.store,host='127.0.0.1',port=0,public_url='http://localhost').start();self.base='http://127.0.0.1:'+str(self.portal.port)
     def tearDown(self):self.portal.close();super().tearDown()
     def fetch(self,path,data=None,headers=None):
-        request=urllib.request.Request(self.base+path,data=json.dumps(data).encode() if data is not None else None,headers=headers or {})
+        headers=dict(headers or {})
+        if getattr(self,'cookie',None):
+            headers['Cookie']=self.cookie
+        request=urllib.request.Request(self.base+path,data=json.dumps(data).encode() if data is not None else None,headers=headers)
         return urllib.request.urlopen(request,timeout=3)
     def test_full_phone_download_name_and_ranking_flow(self):
         self.add();ident=self.store.add_art(self.session['id'],PNG,23);token=self.session['token']
         with self.fetch('/v/'+token) as r:self.assertEqual(r.status,200)
+        self.cookie=login_fixture(self.portal,token)
         with self.fetch('/api/visitor/'+token+'/name',{'name':'龙门客'},{'Content-Type':'application/json','X-Ink-Visitor':'1'}) as r:self.assertEqual(json.load(r)['name'],'龙门客')
         with self.fetch('/api/leaderboards') as r:self.assertEqual(json.load(r)['boards'][0]['items'][0]['name'],'龙门客')
         with self.fetch('/v/'+token+'/art/'+ident+'.png') as r:self.assertEqual(r.read(),PNG)
@@ -162,7 +181,11 @@ class HTTPCase(StoreCase):
         for path in ('/api/score','/api/finish','/api/current'):
             with self.assertRaises(urllib.error.HTTPError) as error:self.fetch(path,{})
             self.assertEqual(error.exception.code,404)
-        with self.assertRaises(urllib.error.HTTPError) as error:self.fetch('/api/visitor/'+self.session['token']+'/name',{'name':'bad'},{'Content-Type':'application/json'})
+        path='/api/visitor/'+self.session['token']+'/name'
+        with self.assertRaises(urllib.error.HTTPError) as error:self.fetch(path,{'name':'bad'})
+        self.assertEqual(error.exception.code,401)
+        self.cookie=login_fixture(self.portal,self.session['token'])
+        with self.assertRaises(urllib.error.HTTPError) as error:self.fetch(path,{'name':'bad'},{'Content-Type':'application/json'})
         self.assertEqual(error.exception.code,403)
     def test_wireless_address_changes_ethernet_ignored_and_disconnect(self):
         address=NetworkAddress(8091)

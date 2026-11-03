@@ -15,10 +15,11 @@ Environment=LD_LIBRARY_PATH=/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-
 Environment=OPENBLAS_NUM_THREADS=1
 Environment=OMP_NUM_THREADS=1
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /home/ubuntu/bodyink-live/app.py --target-fps 25 --preview-fps 3 --enabled-actions A01 A02 A03 A04 A06
+ExecStart=/usr/bin/python3 /home/ubuntu/bodyink-live/app.py --host 127.0.0.1 --target-fps 25 --preview-fps 3 --enabled-actions A01 A02 A03 A04 A06
 Restart=on-failure
 RestartSec=5
-TimeoutStopSec=15
+# A nonresponsive AXI transfer must retain its XRT buffers and owner process.
+TimeoutStopSec=infinity
 UMask=0022
 
 [Install]

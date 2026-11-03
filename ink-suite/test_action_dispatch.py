@@ -153,6 +153,26 @@ class EmbeddedTests(unittest.TestCase):
         self.assertTrue(done.call_args.args[0]);c.app.show_share.assert_not_called()
         c.resume();jobs.pop(0)();c.app.show_share.assert_called_once_with({'qr':'ready'})
 
+    def test_ink_action_archives_the_returned_file_for_launch_session(self):
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from visitor.store import VisitorStore
+        import base64
+        sys.path.insert(0,str(ROOT.parent/'bodyink-live'))
+        with TemporaryDirectory() as temp:
+            store=VisitorStore(Path(temp)/'visitor-data');session=store.current()
+            path=Path(temp)/'ink-20261103-171000-000001.png'
+            pixels=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aJ1kAAAAASUVORK5CYII=')
+            path.write_bytes(pixels)
+            c,jobs,_=self.ink_request({'accepted':True,'path':str(path),'event_count':13})
+            c.visitor_ink=Mock()
+            with patch.dict(os.environ,{'INK_VISITOR_DATABASE':str(store.path),'INKSUITE_VISITOR_SESSION':session['id']}):
+                done=Mock();c.ink_action('save',done);jobs.pop(0)()
+            self.assertTrue(done.call_args.args[0]);c.visitor_ink.snapshot.assert_not_called()
+            art,=store.view(session['token'])['artworks']
+            self.assertEqual(art['marks'],13)
+            self.assertEqual(store.artwork(session['token'],art['id'])[1],pixels)
+
     def test_save_rejection_and_offline_do_not_show_qr(self):
         c,jobs,_=self.ink_request({'accepted':False,'reason':'empty painting'})
         done=Mock();c.ink_action('save',done);jobs.pop(0)()

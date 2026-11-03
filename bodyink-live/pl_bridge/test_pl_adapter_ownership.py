@@ -4,7 +4,7 @@ import types
 from unittest.mock import patch
 from pathlib import Path
 import numpy as np
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'live-runtime'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 with patch.dict(sys.modules,{'pl_preprocess':types.SimpleNamespace(Preprocessor=object)}):
     import pl_adapter as module
 

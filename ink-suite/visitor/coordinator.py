@@ -22,10 +22,12 @@ class FinishCoordinator:
 
     def state(self):return json.loads(self.transport('/api/state'))
 
-    def snapshot(self):
+    def snapshot(self,expected_session=None):
         """Called while native menu has paused drawing; never capture a camera."""
         with self.lock:
             session=self.store.current()
+            if expected_session is not None and session['id']!=expected_session:
+                raise RuntimeError('游客会话已切换，请从主菜单重新进入')
             if session['status']!='active':return session
             before=self.state();png=self.transport('/art.png');after=self.state()
             if before.get('art_revision')!=after.get('art_revision'):raise RuntimeError('画卷仍在更新，请稍后重试')
@@ -50,13 +52,15 @@ class FinishCoordinator:
             if current['status']=='active':
                 if state.get('event_count',0)>0:self.store.add_art(session_id,png,state['event_count'])
                 # Build and verify the entire downloadable package BEFORE ink clear.
+                with self.store.connect() as db:
+                    expected_art_count=db.execute('SELECT COUNT(*) FROM artworks WHERE session_id=?',(session_id,)).fetchone()[0]
                 payload=self.store.report(current['token'],'zip',final=True)
                 with zipfile.ZipFile(__import__('io').BytesIO(payload)) as archive:
                     if archive.testzip() is not None:raise RuntimeError('作品报告归档校验失败')
                 target=self.store.root/('archive-'+session_id+'.zip');temp=target.with_suffix('.tmp')
                 with temp.open('wb') as stream:stream.write(payload);stream.flush();os.fsync(stream.fileno())
                 temp.replace(target)
-                current=self.store.begin_finish(session_id,finish_key or uuid.uuid4().hex,digest)
+                current=self.store.begin_finish(session_id,finish_key or uuid.uuid4().hex,digest,expected_art_count)
             archive_path=self.store.root/('archive-'+session_id+'.zip')
             if not archive_path.is_file():raise RuntimeError('归档文件缺失，已保留画卷，请重试')
             with zipfile.ZipFile(archive_path) as archive:

@@ -7,7 +7,6 @@ from pathlib import Path
 import re
 import sqlite3
 import subprocess
-import sys
 import threading
 import time
 from urllib.parse import parse_qs
@@ -39,11 +38,12 @@ def local_url(value):
     return value.rstrip('/')
 
 def qr_png(url):
-    try:import qrcode
-    except ImportError:
-        for path in (Path('/home/ubuntu/connected-gallery/vendor'),Path(__file__).resolve().parents[2]/'ConnectedGallery/vendor'):
-            if path.is_dir():sys.path.insert(0,str(path));break
+    try:
         import qrcode
+    except ModuleNotFoundError as exc:
+        if exc.name != 'qrcode':
+            raise
+        raise RuntimeError('生成二维码需要板端 Python 系统包 python3-qrcode') from exc
     output=io.BytesIO();qrcode.make(url,box_size=7,border=4).save(output,format='PNG');return output.getvalue()
 
 class NetworkAddress:

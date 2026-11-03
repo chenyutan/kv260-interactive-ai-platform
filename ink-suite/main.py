@@ -1240,6 +1240,11 @@ class Suite(AIHost, Gtk.Window):
         try:
             logdir=ROOT/'logs';logdir.mkdir(exist_ok=True)
             child_env=dict(os.environ)
+            child_env.pop('INK_VISITOR_PORT', None)
+            child_env.pop('INK_VISITOR_DATABASE', None)
+            if getattr(self, 'visitor_portal', None) and not self.args.offline_preview:
+                child_env['INK_VISITOR_PORT'] = str(self.visitor_portal.port)
+                child_env['INK_VISITOR_DATABASE'] = str(self.visitor_portal.store.path)
             child_env['INK_CONTROL_MODE']=self.control_mode
             if getattr(self,'visitor_store',None) and not self.args.offline_preview:
                 child_env['INKSUITE_VISITOR_DATA']=str(self.visitor_store.root)

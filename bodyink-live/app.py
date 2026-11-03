@@ -318,9 +318,9 @@ class LiveApp:
                 else:self.renderer.undo()
             elif op=='save':
                 filename=self.args.output/('ink-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f')+'.png')
-                self.renderer.save(filename)
+                saved = self.renderer.save(filename)
                 return {'accepted':True,'message':'作品已保存在板卡，并下载到浏览器','path':str(filename),
-                        'download_url':'/saved/'+filename.name}
+                        'download_url':'/saved/'+filename.name, 'event_count':saved['event_count']}
             self.refresh_art();return {'accepted':True}
 
     @staticmethod
@@ -441,7 +441,11 @@ class LiveApp:
                     continue
                 if not self.publish_prepared((metadata,raw,prepared)):break
         finally:
-            if use_pl:pre.close()
+            if use_pl:
+                if pre.pp.active_buffers is not None:
+                    # Stop consumers before waiting for the hardware's terminal status.
+                    self.stop.set()
+                pre.close()
 
     def preview_worker(self):
         pre=YuyvPreprocessor()
@@ -528,9 +532,13 @@ class LiveApp:
         targets=[self.capture,self.preview_worker,self.paint_worker]
         if self.input_size==(256,256) and getattr(self.args,'preprocess_mode','prefetch')!='latest':targets.append(self.preprocess_worker)
         for target in targets:
-            worker=threading.Thread(target=self.worker,args=(target,),daemon=True);worker.start();workers.append(worker)
-        self.viewer.start();next_preview=last_report=0.;camera={};last_frame=None
+            owns_dma = target == self.preprocess_worker and getattr(self.args, 'preprocess_backend', 'cpu') == 'pl'
+            worker = threading.Thread(target=self.worker, args=(target,), daemon=not owns_dma)
+            worker.start()
+            workers.append(worker)
+        next_preview=last_report=0.;camera={};last_frame=None
         try:
+            self.viewer.start()
             while not self.stop.is_set():
                 try:packet=self.take_inference_packet(timeout=.5)
                 except queue.Empty:
@@ -674,18 +682,19 @@ class LiveApp:
         finally:
             self.stop.set();self.viewer.stop()
             if self.action_process is not None:self.action_process.close()
-            for worker in workers:worker.join(timeout=3)
+            for worker in workers:
+                worker.join(timeout=3 if worker.daemon else None)
         if self.failure:raise RuntimeError('A required runtime worker failed') from self.failure
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--host',default='0.0.0.0');p.add_argument('--port',type=int,default=8088)
+    p=argparse.ArgumentParser();p.add_argument('--host',choices=('127.0.0.1','localhost'),default='127.0.0.1');p.add_argument('--port',type=int,default=8088)
     p.add_argument('--backend',choices=['hourglass','movenet'],default='hourglass')
     p.add_argument('--enabled-actions',nargs='+',choices=ACTIONS,help='Explicit preview action subset; omitted requires all six classes')
     p.add_argument('--target-fps',type=float,default=60);p.add_argument('--preview-fps',type=float,default=30)
     p.add_argument('--preview-width',type=int,choices=(384,640),default=384)
     p.add_argument('--preprocess-mode',choices=('prefetch','latest','timed'),default='prefetch',help='Candidate scheduling modes; benchmark before selecting')
     p.add_argument('--prefetch-credit',choices=('bounded','unlimited'),default='bounded',help='Bound speculative preprocessing to one unconsumed packet; unlimited is production scheduling for A/B')
-    p.add_argument('--preprocess-backend',choices=('cpu','pl'),default='cpu',help='PL requires the validated BodyInk DMA firmware; primary ROI only')
+    p.add_argument('--preprocess-backend',choices=('cpu','pl'),default='cpu',help='PL prepares primary and fallback ROIs using the BodyInk DMA firmware')
     p.add_argument('--snapshot-buffer',choices=('bytes','mmap'),default='bytes',help='Use an owned read-only sealed frame mapping to avoid a full-frame client copy')
     p.add_argument('--templates',type=Path,default=ROOT/'dataset/templates.npz')
     p.add_argument('--calibration',type=Path,default=ROOT/'dataset/speed_calibration.json')
@@ -695,7 +704,7 @@ def main():
         p.error('PL preprocessing requires Hourglass and a prefetch/timed worker')
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s')
     app=LiveApp(args)
-    for sig in (signal.SIGTERM,signal.SIGINT):signal.signal(sig,lambda *_:app.stop.set())
+    for sig in (signal.SIGTERM,signal.SIGINT,signal.SIGHUP):signal.signal(sig,lambda *_:app.stop.set())
     app.run()
 
 if __name__=='__main__':main()

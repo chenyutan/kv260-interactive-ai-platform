@@ -6,5 +6,7 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh /home/ubuntu/bodyink-live/recover_camera.sh
+User=root
+WorkingDirectory=/
+ExecStart=/usr/local/libexec/bodyink/recover_camera.sh
 TimeoutStartSec=15

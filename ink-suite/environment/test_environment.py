@@ -231,11 +231,30 @@ class PhotoUiTests(unittest.TestCase):
         self.service.fail=True;self.panel.begin_capture();self.finish_countdown();self.pump(2,lambda:self.panel.session.phase=='error')
         self.pump(.5);self.assertEqual(len(self.service.posts),1);self.assertEqual(self.calls,[])
         self.service.fail=False;self.shoot();self.assertEqual(len(self.service.posts),2);self.assertEqual(len(self.calls),1)
+    def test_native_capture_archives_exact_png_without_wifi(self):
+        import os
+        import sys
+        suite=Path(__file__).resolve().parents[1]
+        sys.path.insert(0,str(suite))
+        sys.path.insert(0,str(suite.parent/'bodyink-live'))
+        from visitor.store import VisitorStore
+        from network_share import ShareUnavailable
+        store=VisitorStore(Path(self.directory.name)/'visitor-data')
+        current=store.current()
+        self.shoot()
+        with patch.dict(os.environ,{'INKSUITE_VISITOR_SESSION':current['id'],'INK_VISITOR_DATABASE':str(store.path)}), patch('network_share.fetch_share',side_effect=ShareUnavailable('没有 Wi-Fi')):
+            self.panel.save(self.panel.save_button)
+            self.pump(5,lambda:not self.panel.saving_artifacts)
+        arts=store.view(current['token'])['artworks']
+        self.assertEqual([a['title'] for a in arts],['眼前风景 · 水墨写生'])
+        saved=next(Path(self.directory.name).glob('*.png'))
+        self.assertEqual(store.artwork(current['token'],arts[0]['id'])[1],saved.read_bytes())
+
     def test_save_binds_presented_result_and_stale_share_does_not_open(self):
         self.shoot();expected=self.panel.current.copy();artifact=self.panel.artifact_id
         entered=threading.Event();release=threading.Event();actual_save=save_art
         def delayed_save(*args):entered.set();release.wait(2);return actual_save(*args)
-        share=SimpleNamespace(fetch_share=lambda name:dict(png=b'not-used',url='http://example.invalid/'+name))
+        share=SimpleNamespace(archive_saved=lambda *args:None, fetch_share=lambda name:dict(png=b'not-used',url='http://example.invalid/'+name))
         with patch('main.save_art',delayed_save),patch.dict('sys.modules',{'network_share':share}):
             self.panel.save(self.panel.save_button);self.pump(1,entered.is_set);self.panel.retake();release.set()
             self.pump(3,lambda:not self.panel.saving_artifacts)

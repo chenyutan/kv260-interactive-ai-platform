@@ -18,4 +18,6 @@
 2. 将本仓库的 `board`、`data` 保持在同一父目录，执行 `python3 board/check_pl.py --runtime /path/to/bodyink-live`。运行目录内应有 `pl_bridge`、`libpl_mmio.so` 与 `libroi_copy.so`，两份库按首页说明放在 `pl_bridge` 内。
 3. 脚本把公开合成的 32×24 YUYV 输入传给产品 PL 适配器，检查带填充行和奇数起点的 17×13 ROI。成功时输出硬件计时和 196,608 个一致字节的摘要。该入口调用硬件并使用单个合成输入；36 组历史实测独立保存在上方文件中。
 
+启动前可按[板端复现说明](../report/reproduction.md)核对 generic-uio 的匹配参数、窗口名、地址、长度和当前用户的读写权限。若 DMA 取消后硬件仍忙，检测程序会保留设备锁和缓冲区，等到相同标签完成后再退出。对于持续挂起的硬件，隔离设备后整板断电重启。
+
 原历史测试入口为 `bodyink-live/pl_bridge/test_pl_board.py`，依赖原录制 RAW 帧和冻结参考包。公开数据另提供可复现的合成输入和原始黄金热图。

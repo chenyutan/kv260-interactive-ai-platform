@@ -337,6 +337,11 @@ class AvatarPanel(Gtk.Box):
                 image = Image.frombuffer('RGBA',(1280,720),pixels,'raw','BGRA',0,1).convert('RGB')
                 path = save_art(np.array(image),self.args.works,metadata)
                 emit('artwork_saved',name=path.name,kind='avatar')
+                if not self.args.offline_preview:
+                    bridge=str(ROOT.parent/'bodyink-live')
+                    if bridge not in sys.path:sys.path.insert(0,bridge)
+                    from network_share import archive_saved
+                    archive_saved(path, '画中人 · 国风分身')
             except Exception as exc:
                 error = str(exc)
             GLib.idle_add(self.saved,path,error,generation,priority=GLib.PRIORITY_DEFAULT)
@@ -350,12 +355,11 @@ class AvatarPanel(Gtk.Box):
         if self.stop.is_set():
             return False
         self.save_button.set_sensitive(True)
-        self.notice = '留影已保存' if path else '保存失败：'+str(error)[:80]
+        self.notice = ('留影已保存在板卡；'+str(error) if error else '留影已保存') if path else '保存失败：'+str(error)[:80]
         self.notice_until = time.monotonic()+5
-        if path and not self.args.offline_preview:
+        if path and not error and not self.args.offline_preview:
             def share():
                 try:
-                    sys.path.insert(0,'/home/ubuntu/bodyink-live')
                     from network_share import fetch_share
                     result = fetch_share(path.name)
                     GLib.idle_add(self.show_share,result,generation,priority=GLib.PRIORITY_DEFAULT)
@@ -373,7 +377,7 @@ class AvatarPanel(Gtk.Box):
         box = dialog.get_content_area()
         box.set_border_width(16)
         box.set_spacing(10)
-        box.pack_start(Gtk.Label(label='手机与板卡连接同一热点后，扫码下载'),False,False,0)
+        box.pack_start(Gtk.Label(label='手机连接展台 Wi-Fi，扫码登录本次游玩'),False,False,0)
         loader = GdkPixbuf.PixbufLoader.new_with_type('png')
         loader.write(result['png'])
         loader.close()

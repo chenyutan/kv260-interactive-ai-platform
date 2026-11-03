@@ -83,6 +83,8 @@ class PLAdapter:
         return QuantizedRGB(result)
 
     def close(self):
+        if self.pp.active_buffers is not None:
+            self.pp.drain_before_exit()
         self._release_buffers()
         self.plans.clear()
         self.pp.close()

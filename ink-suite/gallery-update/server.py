@@ -1,7 +1,6 @@
 """Local KV260 gallery. Reads saved artwork/results; never acquires a camera."""
 import argparse
 import hashlib
-import io
 import ipaddress
 import json
 import math
@@ -9,19 +8,17 @@ import mimetypes
 import re
 import socket
 import subprocess
-import sys
 import threading
 import time
 import tempfile
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlsplit
+from urllib.parse import parse_qs, urlsplit
+
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / 'vendor'))
-from PIL import Image
-import qrcode
 
 ID = re.compile(r'^[a-f0-9]{24}$')
 THEMES = {'landscape': '山水', 'bamboo': '墨竹', 'plum': '梅韵', 'mixed': '山水竹梅'}
@@ -159,34 +156,6 @@ class Gallery:
             self.network_at = time.monotonic()
             return self.network_cache
 
-    def share(self, name=None, ident=None):
-        net = self.network()
-        if not net['base_url']:
-            raise ConnectionError('板卡还没有可用的局域网地址')
-        if name is not None:
-            if Path(name).name != name or '/' in name or '\\' in name:
-                raise KeyError(name)
-            self.artworks(force=True)
-            ident = next((x['id'] for x in self.catalog.values() if x['name'] == name), None)
-            if not ident:
-                raise KeyError(name)
-        if ident:
-            item, _ = self.artwork(ident)
-            return dict(url=net['base_url'] + item['page_url'],
-                qr_url=f'/api/artworks/{ident}/qr.png',
-                download_url=net['base_url'] + item['download_url'],
-                wireless_connected=net['wireless_connected'])
-        return dict(url=net['base_url']+'/', qr_url='/api/qr.png', download_url=None,
-                    wireless_connected=net['wireless_connected'])
-
-    def qr(self, ident=None):
-        link = self.share(ident=ident)['url']
-        code = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=7, border=4)
-        code.add_data(link); code.make(fit=True)
-        output = io.BytesIO()
-        code.make_image(fill_color='black', back_color='white').save(output, format='PNG')
-        return output.getvalue()
-
     def scores(self, game):
         directory = {'fruit': self.fruit, 'fight': self.fight}.get(game)
         if directory is None:
@@ -229,6 +198,8 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
     def __init__(self, address, gallery):
+        if address[0] not in ('127.0.0.1', 'localhost'):
+            raise ValueError('历史画廊只支持本机浏览；手机领取请使用游客门户。')
         self.gallery = gallery
         self.slots = threading.BoundedSemaphore(8)
         super().__init__(address, Handler)
@@ -284,6 +255,8 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, ValueError, TypeError):
             self.respond(dict(error='暂时无法读取，请稍后重试'), status=503)
     def route(self):
+        if self.headers.get('Host', '').lower() not in {f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}'}:
+            return self.respond(dict(error='仅限本机访问'), status=403)
         request = urlsplit(self.path)
         path, query, gallery = request.path, parse_qs(request.query), self.server.gallery
         if path in ('/', '/scores') or re.fullmatch(r'/art/[a-f0-9]{24}', path):
@@ -297,16 +270,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(gallery.network())
         if path == '/api/artworks':
             return self.respond(dict(items=gallery.artworks()))
-        if path == '/api/share':
-            return self.respond(gallery.share(name=query.get('name', [None])[0]))
+        if path in ('/api/share', '/api/qr.png') or re.fullmatch(r'/api/artworks/[a-f0-9]{24}/qr.png', path):
+            return self.respond(dict(error='请在展台主菜单选择“扫码下载”，登录后领取本次作品。'), status=410)
         if path == '/api/scores':
             return self.respond(dict(items=gallery.scores(query.get('game', ['fruit'])[0])))
-        if path == '/api/qr.png':
-            return self.respond(gallery.qr(), 'image/png', headers={'Cache-Control':'no-store'})
-        match = re.fullmatch(r'/api/artworks/([a-f0-9]{24})(/qr.png)?', path)
+        match = re.fullmatch(r'/api/artworks/([a-f0-9]{24})', path)
         if match:
-            if match[2]:
-                return self.respond(gallery.qr(match[1]), 'image/png', headers={'Cache-Control':'no-store'})
             item, _ = gallery.artwork(match[1])
             return self.respond(item)
         match = re.fullmatch(r'/(artwork|thumb)/([a-f0-9]{24})\.(png|jpg)', path)
@@ -324,7 +293,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--host', default='0.0.0.0'); p.add_argument('--port', type=int, default=8090)
+    p.add_argument('--host', default='127.0.0.1'); p.add_argument('--port', type=int, default=8090)
     p.add_argument('--works', default='/home/ubuntu/bodyink-live/works')
     p.add_argument('--fruit-rounds', default='/home/ubuntu/fruit-slice/native/rounds')
     p.add_argument('--fight-rounds', default='/home/ubuntu/ink-fight/native/rounds')

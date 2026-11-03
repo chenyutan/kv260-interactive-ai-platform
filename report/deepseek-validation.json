@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-22",
+  "platform": "AMD Kria KV260",
+  "model": "deepseek-flash",
+  "thinking": "disabled",
+  "scope": "Historical online validation using synthetic tasks. This receipt summarizes the six schema probes and two asynchronous service calls from the schema-fix validation round. The twelve-project catalogue also has separate offline tests.",
+  "synthetic_service_data": true,
+  "production_records_changed": false,
+  "creation_schema_probes": [
+    {
+      "preset": "landscape",
+      "free_text": false,
+      "status": "valid",
+      "seconds": 1.207
+    },
+    {
+      "preset": "bamboo",
+      "free_text": false,
+      "status": "valid",
+      "seconds": 1.172
+    },
+    {
+      "preset": "plum",
+      "free_text": false,
+      "status": "valid",
+      "seconds": 1.215
+    },
+    {
+      "preset": "mixed",
+      "free_text": false,
+      "status": "valid",
+      "seconds": 1.031
+    },
+    {
+      "preset": "plum",
+      "free_text": true,
+      "status": "valid",
+      "seconds": 0.964
+    },
+    {
+      "preset": "mixed",
+      "free_text": true,
+      "status": "valid",
+      "seconds": 1.117
+    }
+  ],
+  "asynchronous_service_calls": [
+    {
+      "kind": "creation",
+      "preset": "bamboo",
+      "status": "ready",
+      "elapsed_seconds": 1.031
+    },
+    {
+      "kind": "review",
+      "preset": "improve",
+      "status": "ready",
+      "elapsed_seconds": 0.969
+    }
+  ],
+  "passed": true
+}

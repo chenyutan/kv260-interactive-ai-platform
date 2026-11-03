@@ -84,6 +84,9 @@ class VisitorStore:
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS artworks(id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES sessions(id),
               sha TEXT NOT NULL,title TEXT NOT NULL,created TEXT NOT NULL,marks INTEGER NOT NULL,UNIQUE(session_id,sha));
+            CREATE TABLE IF NOT EXISTS native_art_sources(
+              session_id TEXT NOT NULL REFERENCES sessions(id),name TEXT NOT NULL,
+              art_id TEXT NOT NULL REFERENCES artworks(id),PRIMARY KEY(session_id,name));
             CREATE TABLE IF NOT EXISTS rounds(id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES sessions(id),
               game TEXT NOT NULL,rules TEXT NOT NULL,status TEXT NOT NULL,started TEXT NOT NULL,updated TEXT NOT NULL,
               ended TEXT,data TEXT NOT NULL,score INTEGER NOT NULL);
@@ -186,20 +189,35 @@ class VisitorStore:
         with self.connect() as db:db.execute('UPDATE sessions SET name=? WHERE id=?',(name,session['id']))
         return self.view(token)
 
-    def add_art(self,session_id,png,marks=0,title='身随墨动 · 水墨画'):
+    def add_art(self,session_id,png,marks=0,title='身随墨动 · 水墨画', *, source_name=None):
         if not isinstance(png,bytes) or not png.startswith(b'\x89PNG\r\n\x1a\n') or not 8<=len(png)<=30_000_000:
             raise ValueError('Invalid PNG artwork')
+        if source_name is not None and not re.fullmatch(r'ink-\d{8}-\d{6}-\d{6}\.png', source_name):
+            raise ValueError('Invalid native artwork name')
         digest=hashlib.sha256(png).hexdigest()
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             session=db.execute('SELECT status FROM sessions WHERE id=?',(session_id,)).fetchone()
             if session is None or session['status']=='archived':raise ValueError('Visitor session is closed')
+            if source_name is not None:
+                active=db.execute("SELECT value FROM meta WHERE key='active_session'").fetchone()
+                if session['status']!='active' or not active or active['value']!=session_id:
+                    raise ValueError('本次游玩已结束，作品仅保存在板卡')
+                linked=db.execute('SELECT a.id,a.sha FROM native_art_sources n JOIN artworks a ON a.id=n.art_id '
+                                  'WHERE n.session_id=? AND n.name=?',(session_id,source_name)).fetchone()
+                if linked:
+                    if linked['sha']!=digest:raise ValueError('作品文件名已对应另一幅画')
+                    return linked['id']
             row=db.execute('SELECT id FROM artworks WHERE session_id=? AND sha=?',(session_id,digest)).fetchone()
-            if row:return row['id']
-            ident=uuid.uuid4().hex;path=self.art_root/(ident+'.png');temporary=path.with_suffix('.tmp')
-            with temporary.open('wb') as stream:stream.write(png);stream.flush();os.fsync(stream.fileno())
-            temporary.replace(path)
-            db.execute('INSERT INTO artworks VALUES(?,?,?,?,?,?)',(ident,session_id,digest,title,now(),max(0,int(marks))))
+            if row:
+                ident=row['id']
+            else:
+                ident=uuid.uuid4().hex;path=self.art_root/(ident+'.png');temporary=path.with_suffix('.tmp')
+                with temporary.open('wb') as stream:stream.write(png);stream.flush();os.fsync(stream.fileno())
+                temporary.replace(path)
+                db.execute('INSERT INTO artworks VALUES(?,?,?,?,?,?)',(ident,session_id,digest,title,now(),max(0,int(marks))))
+            if source_name is not None:
+                db.execute('INSERT INTO native_art_sources VALUES(?,?,?)',(session_id,source_name,ident))
             return ident
 
     def record(self,session_id,round_id,game,data,status='active',started=None):
@@ -234,12 +252,15 @@ class VisitorStore:
             self.record(*job);path.unlink();restored+=1
         return restored
 
-    def begin_finish(self,session_id,finish_key,art_hash):
+    def begin_finish(self,session_id,finish_key,art_hash,expected_art_count=None):
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row=db.execute('SELECT * FROM sessions WHERE id=?',(session_id,)).fetchone()
             if row is None:raise KeyError(session_id)
             if row['status']!='active':return dict(row)
+            if expected_art_count is not None:
+                count=db.execute('SELECT COUNT(*) FROM artworks WHERE session_id=?',(session_id,)).fetchone()[0]
+                if count!=expected_art_count:raise RuntimeError('刚有新的作品保存，请重试归档')
             db.execute("UPDATE sessions SET status='ending',finish_key=?,finish_art_hash=? WHERE id=?",(finish_key,art_hash,session_id))
             db.execute("UPDATE rounds SET status='interrupted',ended=? WHERE session_id=? AND status='active'",(now(),session_id))
             return dict(db.execute('SELECT * FROM sessions WHERE id=?',(session_id,)).fetchone())

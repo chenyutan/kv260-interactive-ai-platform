@@ -1,6 +1,8 @@
 
 'use strict';
 const scannedToken=location.pathname.match(/^\/v\/([A-Za-z0-9_-]{43})$/)?.[1]||null;
+const scannedArt=(location.search||'').match(/[?&]art=([a-f0-9]{32})(?:&|$)/)?.[1]||null;
+let scannedArtShown=false;
 let token=null;
 const accountState={account:null,sessions:[],epoch:0,mode:'login',loading:false,submitting:false,claiming:false,claimDismissed:false,page:'overview',controllers:new Set()};
 const contentPages={gallery:0,rounds:0,photos:0,ai:0,boards:0};
@@ -94,6 +96,10 @@ function privateView(value,{setName=false}={}){if(!accountState.account||!token)
   setText('session-badge',labels[value.status]||'正在游玩');$('session-badge').className='badge '+(value.status==='archived'?'archived':value.status==='ending'?'ending':'');setText('session-date',date(value.started)+' 开始');setText('ranking-note',value.ranking_note||'完成一局后进入排行榜，中断记录保留在报告里。');
   const arts=Array.isArray(value.artworks)?value.artworks:[];const rounds=Array.isArray(value.rounds)?value.rounds:[];const completed=rounds.filter(r=>r.status==='completed').length;const games=new Set(rounds.map(r=>r.game));setText('art-count',arts.length);setText('round-count',completed);setText('realm-count',games.size);setText('gallery-count',arts.length+' 幅作品');setText('result-count',rounds.length+' 局记录');setText('report-name',value.name+' 的游玩报告');setText('cover-rounds',completed?completed+' 局完成':'暂无成绩');setText('cover-artworks',arts.length?arts.length+' 幅作品':'暂无作品');
   setText('archive-note',value.status==='archived'?'本次游玩已归档。作品与成绩保留在此链接，可随时下载。':value.status==='ending'?'正在保存本次游玩，请稍候。作品与成绩会保留，完成后页面自动更新。':'游玩结束时，在板卡主菜单选择“结束游玩”。此链接会保留你的作品与成绩。');
+  if(scannedArt&&!scannedArtShown&&token===scannedToken){
+    const art=arts.find(item=>item.id===scannedArt);
+    if(art){scannedArtShown=true;preview(base()+'/art/'+art.id+'.png',art.title||'我的作品','长按图片或点击下载即可保存。','墨境-作品.png');}
+  }
   if(arts.length)pageItems('gallery',arts,4,$('artworks'),$('gallery-pager'),a=>a.id,artCard,updateArt);else{empty($('artworks'),'还没有水墨作品','完成创作后，作品会保存在这次游玩中。','画');$('gallery-pager').hidden=true;}
   if(rounds.length)pageItems('rounds',[...rounds].reverse(),4,$('rounds'),$('rounds-pager'),r=>r.id,roundCard,updateRound);else{empty($('rounds'),'第一局，等你开始','完成游戏后，成绩会自动记录在这里。','游');$('rounds-pager').hidden=true;}
   configureReports(value);

@@ -227,6 +227,25 @@ class AvatarUiTests(unittest.TestCase):
         self.panel.show_page('photo'); self.render_release.set(); self.shoot()
         self.assertEqual(len(self.photo_calls), 2)
 
+    def test_native_capture_archives_exact_png_without_wifi(self):
+        import os
+        import sys
+        suite=Path(__file__).resolve().parents[1]
+        sys.path.insert(0,str(suite))
+        sys.path.insert(0,str(suite.parent/'bodyink-live'))
+        from visitor.store import VisitorStore
+        from network_share import ShareUnavailable
+        store=VisitorStore(Path(self.directory.name)/'visitor-data')
+        current=store.current()
+        self.panel.args.offline_preview=False
+        with patch.dict(os.environ,{'INKSUITE_VISITOR_SESSION':current['id'],'INK_VISITOR_DATABASE':str(store.path)}), patch('network_share.fetch_share',side_effect=ShareUnavailable('没有 Wi-Fi')):
+            self.panel.save()
+            self.pump(5,lambda:not self.panel.save_busy)
+        arts=store.view(current['token'])['artworks']
+        self.assertEqual([a['title'] for a in arts],['画中人 · 国风分身'])
+        saved=next(Path(self.directory.name).glob('*.png'))
+        self.assertEqual(store.artwork(current['token'],arts[0]['id'])[1],saved.read_bytes())
+
     def test_avatar_save_is_exact_snapshot_and_repeated_click_is_ignored(self):
         self.panel.pose = ui.neutral_pose()
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1280, 720)

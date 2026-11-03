@@ -12,6 +12,8 @@ from urllib.parse import urlparse,parse_qs
 
 class ViewerServer:
     def __init__(self, host, port, get_state, get_art_png, get_preview_jpeg, on_command, get_saved_png=None, get_preview_frame=None, get_preview_rgb_frame=None, get_art_scene=None,get_environment_frame=None,get_environment_photo=None):
+        if host not in ('localhost', '127.0.0.1'):
+            raise ValueError('The camera and control API requires a loopback address')
         self.get_state = get_state
         self.get_art_png = get_art_png
         self.get_preview_jpeg = get_preview_jpeg
@@ -44,7 +46,19 @@ class ViewerServer:
                 except (BrokenPipeError, ConnectionResetError):
                     pass
 
+            def local_request(self):
+                # Check HTTP authority as well as the listener to prevent DNS rebinding.
+                host = self.headers.get("Host", "")
+                port = self.server.server_port
+                allowed = {f"localhost:{port}", f"127.0.0.1:{port}"}
+                if port == 80:
+                    allowed.update(("localhost", "127.0.0.1"))
+                origin = self.headers.get("Origin")
+                return host in allowed and (origin is None or origin == "http://" + host)
+
             def do_GET(self):
+                if not self.local_request():
+                    return self.send(403, {"message": "Local application only"})
                 path = urlparse(self.path).path
                 try:
                     if path in assets:
@@ -133,10 +147,10 @@ class ViewerServer:
                     self.send(503, {"message": "运行数据暂不可用", "detail": str(exc)})
 
             def do_POST(self):
+                if not self.local_request():
+                    return self.send(403, {'message': 'Local application only'})
                 if urlparse(self.path).path == '/environment/photo.rgb' and get_environment_photo:
                     if self.client_address[0] not in ('127.0.0.1','::1'):return self.send(403,{'message':'Local application only'})
-                    origin=self.headers.get('Origin')
-                    if origin and urlparse(origin).netloc!=self.headers.get('Host'):return self.send(403,{'message':'Local application only'})
                     try:
                         length=int(self.headers.get('Content-Length','0'))
                         if not 0<length<=128:return self.send(400,{'message':'Invalid shutter request'})
@@ -148,9 +162,6 @@ class ViewerServer:
 
                 if urlparse(self.path).path != "/api/command":
                     return self.send(404, {"message": "接口不存在"})
-                origin = self.headers.get("Origin")
-                if origin and urlparse(origin).netloc != self.headers.get("Host"):
-                    return self.send(403, {"message": "请在本机页面执行操作"})
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
                     if length <= 0 or length > 4096:

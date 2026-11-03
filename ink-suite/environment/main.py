@@ -351,12 +351,20 @@ class EnvironmentPanel(Gtk.Box):
             except Exception as exc:
                 print('save:',str(exc),file=sys.stderr,flush=True)
                 GLib.idle_add(self.save_finished,artifact_id,generation,None,None,str(exc));return
+            if not self.args.offline_preview:
+                try:
+                    bridge=str(Path(__file__).resolve().parents[2]/'bodyink-live')
+                    if bridge not in sys.path:sys.path.insert(0,bridge)
+                    from network_share import archive_saved
+                    archive_saved(path, '眼前风景 · 水墨写生')
+                except Exception as exc:
+                    GLib.idle_add(self.save_finished,artifact_id,generation,path,None,str(exc));return
             if self.args.offline_preview or not self.result_matches(artifact_id,generation):
                 GLib.idle_add(self.save_finished,artifact_id,generation,path,None,None);return
             def share_work():
                 share=error=None
                 try:
-                    sys.path.insert(0,'/home/ubuntu/bodyink-live');from network_share import fetch_share
+                    from network_share import fetch_share
                     share=fetch_share(path.name)
                 except Exception as exc:error=str(exc)
                 GLib.idle_add(self.save_finished,artifact_id,generation,path,share,error)
@@ -373,14 +381,14 @@ class EnvironmentPanel(Gtk.Box):
         if not self.result_matches(artifact_id,generation):return False
         if path is None:self.status.set_text('保存失败，请重试')
         elif share:self.status.set_text('作品已保存');self.show_share(share,artifact_id,generation)
-        else:self.status.set_text('作品已保存，可在作品网站中查看' if not self.args.offline_preview else '作品已保存到本地')
+        else:self.status.set_text(('作品已保存在板卡；'+error) if error else '作品已保存到本地')
         return False
 
     def show_share(self,share,artifact_id,generation):
         if not self.result_matches(artifact_id,generation):return False
         self.close_share();dialog=Gtk.Dialog(title='把眼前山水带走',transient_for=self.get_toplevel(),modal=False)
         dialog.add_button('返回作品',Gtk.ResponseType.CLOSE);box=dialog.get_content_area();box.set_border_width(16);box.set_spacing(10)
-        box.pack_start(Gtk.Label(label='作品已收藏，手机扫码下载'),False,False,0)
+        box.pack_start(Gtk.Label(label='扫码登录并关联本次游玩'),False,False,0)
         loader=GdkPixbuf.PixbufLoader.new_with_type('png');loader.write(share['png']);loader.close();pix=loader.get_pixbuf();size=pix.get_width()
         if size<210:pix=pix.scale_simple(size*2,size*2,GdkPixbuf.InterpType.NEAREST)
         box.pack_start(Gtk.Image.new_from_pixbuf(pix),False,False,0)

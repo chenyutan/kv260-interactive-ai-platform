@@ -4,7 +4,6 @@ import errno
 import hashlib
 import json
 import sys
-import time
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +18,7 @@ def main():
     runtime = args.runtime.resolve()
     sys.path[:0] = [str(runtime / "pl_bridge"), str(runtime)]
     from pl_adapter import PLAdapter
+    from pl_preprocess import defer_dma_signals
 
     config = json.loads((root / "data/synthetic-roi.json").read_text(encoding="utf-8"))
     with np.load(root / "data/synthetic-roi.npz", allow_pickle=False) as example:
@@ -33,19 +33,15 @@ def main():
         if exc.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
             sys.exit("PL already has an owner. Run the check during a maintenance window.")
         raise
-    try:
-        result = adapter.resize(source, config["width"], config["height"], config["stride"],
-                                roi=tuple(config["roi_xywh"])).data
-        np.testing.assert_array_equal(result, expected[np.newaxis])
-        print(json.dumps({"equal_bytes": int(result.nbytes), "sha256": hashlib.sha256(result.tobytes()).hexdigest(),
-                          "hardware_ms": adapter.last_timing["hardware_ms"]}))
-    finally:
-        if adapter.pp.active_buffers is not None:
-            # Preserve the same BO ownership rule used by the production board test.
-            print("DMA has not drained. Keep this process alive and reset the PL before terminating it.", file=sys.stderr, flush=True)
-            while True:
-                time.sleep(60)
-        adapter.close()
+    with defer_dma_signals():
+        try:
+            result = adapter.resize(source, config["width"], config["height"], config["stride"],
+                                    roi=tuple(config["roi_xywh"])).data
+            np.testing.assert_array_equal(result, expected[np.newaxis])
+            print(json.dumps({"equal_bytes": int(result.nbytes), "sha256": hashlib.sha256(result.tobytes()).hexdigest(),
+                              "hardware_ms": adapter.last_timing["hardware_ms"]}))
+        finally:
+            adapter.close()
 
 
 if __name__ == "__main__":

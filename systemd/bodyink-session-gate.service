@@ -3,5 +3,5 @@ Description=Permit BodyInk after a stable local graphical login
 After=systemd-logind.service
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/python3 /usr/local/sbin/bodyink-session-gate.py
+ExecStart=/usr/bin/python3 -I /usr/local/sbin/bodyink-session-gate.py
 TimeoutStartSec=30

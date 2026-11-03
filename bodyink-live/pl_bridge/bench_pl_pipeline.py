@@ -7,6 +7,7 @@ import argparse
 import json
 from pathlib import Path
 import queue
+import signal
 import sys
 import threading
 import time
@@ -52,6 +53,8 @@ def main():
                 deadline+=1/60
                 if deadline<time.monotonic():deadline=time.monotonic()
         except BaseException as exc:errors.append(repr(exc));stop.set()
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, lambda *_: stop.set())
     worker=threading.Thread(target=producer);worker.start()
     rows=[];begin=time.monotonic()
     try:
@@ -68,10 +71,7 @@ def main():
                              predict_wall_ms=(finished-started)*1000,
                              preprocess_ms=pre_seconds*1000,**timing))
     finally:
-        stop.set();worker.join(timeout=3)
-        if worker.is_alive() or (a.backend=='pl' and pre.pp.active_buffers is not None):
-            print('FATAL_DMA_NOT_DRAINED: holding BOs until supervisor resets PL',flush=True)
-            while True:time.sleep(1)
+        stop.set();worker.join()
         if a.backend=='pl':pre.close()
     if errors:raise RuntimeError(errors)
     measured=rows[10:]

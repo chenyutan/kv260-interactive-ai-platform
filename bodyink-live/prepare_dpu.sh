@@ -5,6 +5,7 @@
 set -euo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+cd /
 TARGET=bodyink-usb-pl
 STARTER=k26-starter-kits
 EXPECTED=0x101000016010407
@@ -16,7 +17,8 @@ for command in xmutil python3 timeout flock mktemp runuser; do
 done
 [[ -d /sys/bus/platform/devices ]] || fail 'unload_safety_unknown: platform device sysfs unavailable'
 
-exec 9>/run/lock/bodyink-dpu.lock
+install -d -o root -g root -m 0700 /run/bodyink-admin
+exec 9>/run/bodyink-admin/dpu.lock
 flock -n 9 || fail 'another BodyInk DPU preparation is already running'
 WORK=$(mktemp -d /run/bodyink-dpu.XXXXXX)
 trap 'rm -f "$WORK/listapps.txt" "$WORK/operation.txt" "$WORK/query.json" "$WORK/query.err"; rmdir "$WORK"' EXIT
@@ -28,7 +30,7 @@ active_apps() {
         cat "$WORK/listapps.txt" >&2
         fail 'xmutil listapps failed'
     fi
-    python3 - "$WORK/listapps.txt" "$TARGET" "$STARTER" <<'PY'
+    /usr/bin/python3 -I - "$WORK/listapps.txt" "$TARGET" "$STARTER" <<'PY'
 import pathlib,re,sys
 text=pathlib.Path(sys.argv[1]).read_text()
 if re.search(r'error|failed|segmentation fault',text,re.I):
@@ -73,7 +75,7 @@ checked_operation() {
         fail "xmutil $operation failed or timed out; no retry or forced unload"
     fi
     cat "$WORK/operation.txt"
-    python3 - "$WORK/operation.txt" "$operation" "$TARGET" <<'PY'
+    /usr/bin/python3 -I - "$WORK/operation.txt" "$operation" "$TARGET" <<'PY'
 import pathlib,re,sys
 text=pathlib.Path(sys.argv[1]).read_text()
 if re.search(r'error|failed|segmentation fault',text,re.I):
@@ -88,11 +90,11 @@ PY
 probe() {
     # VART uses per-user /tmp/DPU_* locks. Probe as the same user as the live
     # Runner: a root probe can fail protected_regular or leave root-owned locks.
-    if ! timeout 15s runuser -u ubuntu -- env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" /usr/bin/python3 -m xdputil query >"$WORK/query.json" 2>"$WORK/query.err"; then
+    if ! timeout 15s runuser -u ubuntu -- env LD_LIBRARY_PATH="${BODYINK_PROBE_LIBRARY_PATH-/home/ubuntu/.local/share/xilinx-agent-bridge/vart2-static-init}" /usr/bin/python3 -m xdputil query >"$WORK/query.json" 2>"$WORK/query.err"; then
         cat "$WORK/query.err" >&2
         fail 'xdputil query failed; keeping the current overlay unchanged'
     fi
-    python3 - "$WORK/query.json" "$EXPECTED" <<'PY'
+    /usr/bin/python3 -I - "$WORK/query.json" "$EXPECTED" <<'PY'
 import json,pathlib,sys
 data=json.loads(pathlib.Path(sys.argv[1]).read_text())
 kernels=data.get('kernels')
