@@ -252,7 +252,7 @@ class VisitorStore:
             self.record(*job);path.unlink();restored+=1
         return restored
 
-    def begin_finish(self,session_id,finish_key,art_hash,expected_art_count=None):
+    def begin_finish(self,session_id,finish_key,art_hash,expected_art_count=None,*,expected_view=None,ended=None):
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row=db.execute('SELECT * FROM sessions WHERE id=?',(session_id,)).fetchone()
@@ -261,8 +261,12 @@ class VisitorStore:
             if expected_art_count is not None:
                 count=db.execute('SELECT COUNT(*) FROM artworks WHERE session_id=?',(session_id,)).fetchone()[0]
                 if count!=expected_art_count:raise RuntimeError('刚有新的作品保存，请重试归档')
-            db.execute("UPDATE sessions SET status='ending',finish_key=?,finish_art_hash=? WHERE id=?",(finish_key,art_hash,session_id))
-            db.execute("UPDATE rounds SET status='interrupted',ended=? WHERE session_id=? AND status='active'",(now(),session_id))
+            # BEGIN IMMEDIATE excludes writers while we compare the ZIP's source snapshot.
+            if expected_view is not None and self.view(row['token'])!=expected_view:
+                raise RuntimeError('刚有新的作品、成绩或信息更新，请重试归档')
+            ended=ended or now()
+            db.execute("UPDATE sessions SET status='ending',finish_key=?,finish_art_hash=?,ended=? WHERE id=?",(finish_key,art_hash,ended,session_id))
+            db.execute("UPDATE rounds SET status='interrupted',ended=? WHERE session_id=? AND status='active'",(ended,session_id))
             return dict(db.execute('SELECT * FROM sessions WHERE id=?',(session_id,)).fetchone())
 
     def complete_finish(self,session_id):
@@ -272,7 +276,7 @@ class VisitorStore:
             if not row:raise KeyError(session_id)
             if row['status']=='active':raise ValueError('Finish was not requested')
             if row['status']=='ending':
-                db.execute("UPDATE sessions SET status='archived',ended=? WHERE id=?",(now(),session_id));self._new(db)
+                db.execute("UPDATE sessions SET status='archived',ended=COALESCE(ended,?) WHERE id=?",(now(),session_id));self._new(db)
         return self.current()
 
     def view(self,token):
@@ -314,10 +318,15 @@ class VisitorStore:
             bucket.append(dict(rank=len(bucket)+1,name=row['name'] or '游客',score=row['score'],completed_at=row['ended']))
         return [dict(game=g,title=GAMES[g],rules=c,rules_label=rules_label(c),items=v) for (g,c),v in sorted(groups.items())]
 
-    def report(self,token,format='html',final=False,view=None):
+    def report(self,token,format='html',final=False,view=None,*,ended=None):
         self.by_token(token)
         view=self.view(token) if view is None else json.loads(json.dumps(view,ensure_ascii=False))
-        if final:view.update(status='archived',ended=now())
+        if final:
+            ended=ended or now()
+            view.update(status='archived',ended=ended)
+            for row in view['rounds']:
+                if row['status']=='active':
+                    row.update(status='interrupted',ended=ended)
         if format=='json':return json.dumps(view,ensure_ascii=False,allow_nan=False,indent=2).encode('utf-8')
         if format=='csv':
             output=io.StringIO();writer=csv.writer(output);writer.writerow(['游客','游戏','规则','状态','得分','开始时间','结束时间','详情'])
@@ -329,7 +338,7 @@ class VisitorStore:
         if format=='zip':
             output=io.BytesIO()
             with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:
-                for kind in ('html','json','csv'):archive.writestr('report.'+kind,self.report(token,kind,final,view))
+                for kind in ('html','json','csv'):archive.writestr('report.'+kind,self.report(token,kind,view=view))
                 for item in view['artworks']:archive.writestr('artworks/'+item['id']+'.png',self.artwork(token,item['id'])[1])
             return output.getvalue()
         if format!='html':raise ValueError('Unknown report format')

@@ -2,7 +2,9 @@
 import base64
 import io
 import json
+import os
 from pathlib import Path
+import stat
 import tempfile
 import threading
 from types import SimpleNamespace
@@ -83,6 +85,45 @@ class FinishCase(StoreCase):
             with self.assertRaises(OSError):self.coordinator.finish(self.session['id'])
         self.assertEqual(self.backend.clear_calls,0);self.assertEqual(self.backend.marks,23)
         self.assertEqual(self.store.current()['id'],self.session['id'])
+    def test_saved_zip_matches_closed_round_after_child_exit(self):
+        self.add(status='active')
+        self.coordinator.finish(self.session['id'])
+        with zipfile.ZipFile(self.store.root/('archive-'+self.session['id']+'.zip')) as archive:
+            saved=json.loads(archive.read('report.json'))
+            self.assertIn(b'interrupted',archive.read('report.csv'))
+            self.assertIn('中途退出或中断',archive.read('report.html').decode())
+        self.assertEqual(saved,self.store.view(self.session['token']))
+        self.assertEqual(saved['rounds'][0]['status'],'interrupted')
+        self.assertEqual(saved['rounds'][0]['ended'],saved['ended'])
+    @unittest.skipUnless(os.name == 'posix', 'KV260 Linux directory sync')
+    def test_directory_sync_failure_keeps_session_active_until_retry(self):
+        original_sync = os.fsync
+        def fail_directory(fd):
+            if stat.S_ISDIR(os.fstat(fd).st_mode):
+                raise OSError('directory sync failed')
+            return original_sync(fd)
+        with patch('visitor.coordinator.os.fsync', side_effect=fail_directory):
+            with self.assertRaisesRegex(OSError, 'directory sync failed'):
+                self.coordinator.finish(self.session['id'])
+        self.assertEqual(self.store.current()['status'], 'active')
+        self.assertEqual(self.backend.clear_calls, 0)
+        self.coordinator.finish(self.session['id'])
+        self.assertEqual(self.store.view(self.session['token'])['status'], 'archived')
+    def test_late_terminal_score_requires_rebuild_before_clear(self):
+        ident=self.add(status='active')
+        original=self.store.report
+        def interleave(token,kind,*args,**kwargs):
+            data=original(token,kind,*args,**kwargs)
+            if kind=='zip':self.store.record(self.session['id'],ident,'fruit',{'score':99},'completed')
+            return data
+        with patch.object(self.store,'report',side_effect=interleave):
+            with self.assertRaisesRegex(RuntimeError,'成绩'):self.coordinator.finish(self.session['id'])
+        self.assertEqual(self.backend.clear_calls,0)
+        self.coordinator.finish(self.session['id'])
+        with zipfile.ZipFile(self.store.root/('archive-'+self.session['id']+'.zip')) as archive:
+            saved=json.loads(archive.read('report.json'))
+        self.assertEqual(saved['rounds'][0]['score'],99)
+        self.assertEqual(saved,self.store.view(self.session['token']))
     def test_finish_idempotent_old_token_still_downloads_and_names(self):
         self.add();result=self.coordinator.finish(self.session['id'])
         self.assertTrue(result['accepted']);self.assertEqual(self.backend.clear_calls,1);self.assertEqual(self.backend.marks,0)

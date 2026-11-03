@@ -32,7 +32,12 @@ def main():
     state.write_text(json.dumps(updated))
     if allow:
         ready.touch()
-        subprocess.run(['systemctl','start','--no-block','bodyink-live.service'],check=True,timeout=8)
+        try:
+            subprocess.run(['systemctl','start','--no-block','bodyink-live.service'],check=True,timeout=8)
+        except (OSError, subprocess.SubprocessError):
+            # A failed enqueue must not prevent the next timer tick from trying.
+            ready.unlink(missing_ok=True)
+            raise
         print('Local desktop stable for 60 seconds; normal BodyInk startup permitted.')
 
 if __name__=='__main__':main()

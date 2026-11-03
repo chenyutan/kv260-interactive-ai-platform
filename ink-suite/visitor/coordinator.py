@@ -52,15 +52,23 @@ class FinishCoordinator:
             if current['status']=='active':
                 if state.get('event_count',0)>0:self.store.add_art(session_id,png,state['event_count'])
                 # Build and verify the entire downloadable package BEFORE ink clear.
-                with self.store.connect() as db:
-                    expected_art_count=db.execute('SELECT COUNT(*) FROM artworks WHERE session_id=?',(session_id,)).fetchone()[0]
-                payload=self.store.report(current['token'],'zip',final=True)
+                before=self.store.view(current['token'])
+                ended=now()
+                payload=self.store.report(current['token'],'zip',final=True,view=before,ended=ended)
                 with zipfile.ZipFile(__import__('io').BytesIO(payload)) as archive:
                     if archive.testzip() is not None:raise RuntimeError('作品报告归档校验失败')
                 target=self.store.root/('archive-'+session_id+'.zip');temp=target.with_suffix('.tmp')
                 with temp.open('wb') as stream:stream.write(payload);stream.flush();os.fsync(stream.fileno())
                 temp.replace(target)
-                current=self.store.begin_finish(session_id,finish_key or uuid.uuid4().hex,digest,expected_art_count)
+                if os.name == 'posix':
+                    # Persist the renamed ZIP before committing the ending intent in SQLite.
+                    directory_fd = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY)
+                    try:
+                        os.fsync(directory_fd)
+                    finally:
+                        os.close(directory_fd)
+                current=self.store.begin_finish(session_id,finish_key or uuid.uuid4().hex,digest,
+                                                expected_view=before,ended=ended)
             archive_path=self.store.root/('archive-'+session_id+'.zip')
             if not archive_path.is_file():raise RuntimeError('归档文件缺失，已保留画卷，请重试')
             with zipfile.ZipFile(archive_path) as archive:

@@ -45,7 +45,7 @@ Git 仓库和参赛 RAR 的根目录使用相同布局。视觉后端、相机�
 
 2. RTL 功能仿真可直接先运行 run_control_sim.ps1。算术与 ROI 测试使用确定性合成 YUYV 帧；安装 Python、NumPy 和 WSL 中的 gcc，依次运行 generate_vectors.py 和 generate_roi_vectors.py，再执行 run_sim.ps1、run_roi_sim.ps1、run_dma_sim.ps1、run_ip_sim.ps1。运行脚本前设置 XILINX_VIVADO。ROM 文件在 vectors 目录。
 
-3. 目标环境为 KV260 ARM64 Linux、Python 3.10、XRT、VART、NumPy、GTK3/PyGObject、Cairo、Pillow、qrcode（Ubuntu 包 python3-qrcode）、GStreamer 与 GLES2/EGL。按 models/hourglass/model-official.yaml 的 KV260 链接下载 Hourglass，将校验匹配的 hourglass-pe_mpii.xmodel 放到 bodyink-live/models。照片模型恢复方法见 models/photo/README.md，需另备 ARM64 CPython 3.10 版 ONNX Runtime 1.19.2 依赖。板端各组件使用源码中的路径布局 /home/ubuntu/{bodyink-live,ink-suite,ink-fight,fruit-slice}。
+3. 目标环境为 KV260 ARM64 Linux、Python 3.10、XRT、VART、NumPy、GTK3/PyGObject、Cairo、Pillow、qrcode（Ubuntu 包 python3-qrcode）、GStreamer 与 GLES2/EGL。按 models/hourglass/model-official.yaml 的 KV260 链接下载 Hourglass，将校验匹配的 hourglass-pe_mpii.xmodel 放到 bodyink-live/models。照片水墨需还原 ONNX，并在已部署的应用目录中安装 ARM64 CPython 3.10 的 ONNX Runtime 1.19.2。模型写入位置、校验和加载命令见[板端复现说明第 3 节](report/reproduction.md#3-模型运行目录与本机库)。板端各组件使用源码中的路径布局 /home/ubuntu/{bodyink-live,ink-suite,ink-fight,fruit-slice}。
 
 4. 在目标的 bodyink-live 目录，每条普通 C 库使用 cc -O3 -shared -fPIC SOURCE.c -o TARGET.so -lm。对应关系为 dtw.c → libbodyink_dtw.so，start_geometry.c → libbodyink_geometry.so，preprocess.c → libbodyink_preprocess.so，hourglass_postprocess.c → libbodyink_hourglass.so，pl_bridge/pl_mmio.c → pl_bridge/libpl_mmio.so，pl_bridge/roi_copy.c → pl_bridge/libroi_copy.so。使用 c++ -O3 -shared -fPIC postprocess_fast.cpp -o libbodyink_postprocess.so -lm 构建兼容解码库。摄像程序从 camera/build.sh 构建。以管理员身份执行 `sudo sh camera/install_helpers.sh`，将已适配相机的特权脚本安装到系统目录。按[板端部署说明](report/reproduction.md)核对 generic-uio 驱动、用户组及服务启动顺序。
 

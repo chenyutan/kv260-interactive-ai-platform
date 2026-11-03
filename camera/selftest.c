@@ -6,12 +6,7 @@
 
 int main(int argc, char **argv)
 {
-    if (argc != 2 && argc != 3) return 64;
-    if (argc == 3) {
-        if (!strcmp(argv[2], "720")) { capture_width=1280; capture_height=720; }
-        else if (!strcmp(argv[2], "540")) { capture_width=960; capture_height=540; }
-        else return 64;
-    }
+    if (argc != 2) return 64;
     char path[512];
     if (path_join(path, sizeof(path), argv[1], "snapshot.sock")) return 64;
     int listener = create_listener(path);

@@ -1,15 +1,16 @@
-"""Real C producer; checks read-only lifetime and descriptor reclamation."""
+"""Check mapped lifetime using the production 1080p sender and smaller synthetic replays."""
 import tempfile,subprocess,time,sys,gc,os,json
 from pathlib import Path
 import numpy as np
 from snapshot import capture_snapshot
+from transport_fixture import producer_command
 root=Path(__file__).resolve().parent;results=[]
 def descriptors():return len(os.listdir('/proc/self/fd'))
 gc.collect();before=descriptors()
 for repeat in range(4):
  for mode,w,h in [('',1920,1080),('720',1280,720),('540',960,540)]:
   with tempfile.TemporaryDirectory() as d:
-   p=subprocess.Popen([str(root/'selftest-resolution'),d]+([mode] if mode else []),stdout=subprocess.DEVNULL)
+   p=subprocess.Popen(producer_command(d,mode),stdout=subprocess.DEVNULL)
    try:
     sock=Path(d)/'snapshot.sock'
     for _ in range(100):

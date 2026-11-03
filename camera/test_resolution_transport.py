@@ -1,13 +1,14 @@
-"""Exercise actual C memfd producer and Python reader without camera access."""
+"""Check production 1080p IPC and Python reader compatibility with two smaller replays."""
 import tempfile,subprocess,time,json,sys,hashlib
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from snapshot import capture_snapshot
+from transport_fixture import producer_command
 root=Path(__file__).resolve().parent
 results=[]
 for mode,w,h in [('',1920,1080),('720',1280,720),('540',960,540)]:
     with tempfile.TemporaryDirectory() as d:
-        p=subprocess.Popen([str(root/'selftest-resolution'),d]+([mode] if mode else []))
+        p=subprocess.Popen(producer_command(d,mode))
         try:
             sock=Path(d)/'snapshot.sock'
             for _ in range(100):
