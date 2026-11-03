@@ -1,5 +1,7 @@
 # 外部资源与许可
 
+团队独立创作的源码采用仓库根目录的 [MIT License](LICENSE)。以下第三方组件及其派生作品遵循各自许可，原有版权、署名和许可证随源码保留。
+
 * AMD / Xilinx 提供 KV260 板卡平台、DPU IP、Vitis AI 预训练 Hourglass 和运行库。采用官方 2.5 模型清单所列 zcu102/zcu104/kv260 版本。按官方许可单独获取。发布的 PL 预处理 RTL、部署集成和动作解码独立列在本项目目录。
 * 照片处理训练脚本采用 Naoto Inoue 的 pytorch-AdaIN（MIT），保留 models/photo/qa-adain-v4/upstream/license。板端模型可通过项目训练差分和上游 v0.0.0 权重还原。
 * PAL 移植保留 GPL-3.0 许可证及 authors。商业游戏数据须由使用者自行合法取得。TheXTech 1.7.4 保留 GPL-3.0 许可证、原生控制补丁及上游来源。合作赛事、AMD 和 DeepSeek 标志请按各自的品牌授权使用。项目代码使用的默认文件名见 ink-suite/assets/branding/README.md。
